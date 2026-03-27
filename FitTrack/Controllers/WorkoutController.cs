@@ -57,6 +57,8 @@ public class WorkoutController : Controller
 
         if (workout == null) return NotFound();
 
+        var typeMap = await GetExerciseTypeMapAsync();
+
         var vm = new WorkoutDetailsViewModel
         {
             Id = workout.Id,
@@ -71,14 +73,19 @@ public class WorkoutController : Controller
                 ExerciseName = we.Exercise.Name,
                 MuscleGroup = we.Exercise.MuscleGroup,
                 CategoryName = we.Exercise.Category.Name,
+                ExerciseType = we.Exercise.ExerciseType,
                 Sets = we.Sets,
                 Reps = we.Reps,
-                WeightKg = we.WeightKg
+                WeightKg = we.WeightKg,
+                CardioMinutes = we.CardioMinutes,
+                SpeedKmh = we.SpeedKmh,
+                Incline = we.Incline
             }).ToList(),
             AddExerciseForm = new WorkoutExerciseFormViewModel
             {
                 WorkoutId = workout.Id,
-                Exercises = await GetExerciseSelectListAsync()
+                Exercises = await GetExerciseSelectListAsync(),
+                ExerciseTypeMap = typeMap
             }
         };
 
@@ -228,13 +235,21 @@ public class WorkoutController : Controller
             return RedirectToAction(nameof(Details), new { id = vm.WorkoutId });
         }
 
+        var exercise = await _context.Exercises.FindAsync(vm.ExerciseId);
+        if (exercise == null) return NotFound();
+
+        var isCardio = exercise.ExerciseType == "Cardio";
+
         _context.WorkoutExercises.Add(new WorkoutExercise
         {
             WorkoutId = vm.WorkoutId,
             ExerciseId = vm.ExerciseId,
-            Sets = vm.Sets,
-            Reps = vm.Reps,
-            WeightKg = vm.WeightKg
+            Sets = isCardio ? 0 : vm.Sets,
+            Reps = isCardio ? 0 : vm.Reps,
+            WeightKg = isCardio ? 0 : vm.WeightKg,
+            CardioMinutes = isCardio ? vm.CardioMinutes : null,
+            SpeedKmh = isCardio ? vm.SpeedKmh : null,
+            Incline = isCardio ? vm.Incline : null
         });
 
         await _context.SaveChangesAsync();
@@ -263,6 +278,13 @@ public class WorkoutController : Controller
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+    private async Task<Dictionary<int, string>> GetExerciseTypeMapAsync()
+    {
+        return await _context.Exercises
+            .Select(e => new { e.Id, e.ExerciseType })
+            .ToDictionaryAsync(e => e.Id, e => e.ExerciseType);
+    }
 
     private async Task<IEnumerable<SelectListItem>> GetExerciseSelectListAsync()
     {

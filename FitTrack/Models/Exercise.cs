@@ -21,6 +21,11 @@ public class Exercise
     [MaxLength(500)]
     public string? ImageUrl { get; set; }
 
+    /// <summary>Strength | Cardio | Flexibility</summary>
+    [Required]
+    [MaxLength(20)]
+    public string ExerciseType { get; set; } = "Strength";
+
     public int CategoryId { get; set; }
 
     [ForeignKey(nameof(CategoryId))]

@@ -64,28 +64,33 @@ public static class DbSeeder
 
             var allExercises = new List<Exercise>
             {
-                new() { Name = "Bench Press",              Description = "Classic chest press using a barbell on a flat bench.",              MuscleGroup = "Chest",      CategoryId = strength.Id },
-                new() { Name = "Incline Dumbbell Press",   Description = "Upper-chest focused press on an incline bench.",                    MuscleGroup = "Chest",      CategoryId = strength.Id },
-                new() { Name = "Squat",                    Description = "Fundamental lower-body compound movement.",                         MuscleGroup = "Legs",       CategoryId = strength.Id },
-                new() { Name = "Romanian Deadlift",        Description = "Hip-hinge movement targeting hamstrings and glutes.",               MuscleGroup = "Hamstrings", CategoryId = strength.Id },
-                new() { Name = "Pull-Up",                  Description = "Bodyweight vertical pull targeting back and biceps.",               MuscleGroup = "Back",       CategoryId = strength.Id },
-                new() { Name = "Overhead Press",           Description = "Barbell or dumbbell press overhead targeting shoulders.",           MuscleGroup = "Shoulders",  CategoryId = strength.Id },
-                new() { Name = "Dumbbell Row",             Description = "Unilateral back exercise with a dumbbell.",                         MuscleGroup = "Back",       CategoryId = strength.Id },
-                new() { Name = "Deadlift",                 Description = "King of all lifts — full posterior chain movement.",                MuscleGroup = "Back",       CategoryId = powerlifting.Id },
-                new() { Name = "Barbell Squat",            Description = "Competition squat with a barbell on the traps.",                    MuscleGroup = "Legs",       CategoryId = powerlifting.Id },
-                new() { Name = "Powerlifting Bench Press", Description = "Competition-style paused bench press.",                            MuscleGroup = "Chest",      CategoryId = powerlifting.Id },
-                new() { Name = "Running",                  Description = "Steady-state aerobic exercise outdoors or on treadmill.",           MuscleGroup = "Full Body",  CategoryId = cardio.Id },
-                new() { Name = "Cycling",                  Description = "Low-impact cardio on a bike or stationary trainer.",                MuscleGroup = "Legs",       CategoryId = cardio.Id },
-                new() { Name = "Rowing Machine",           Description = "Full-body low-impact cardiovascular exercise.",                     MuscleGroup = "Full Body",  CategoryId = cardio.Id },
-                new() { Name = "Burpees",                  Description = "High-intensity full-body plyometric movement.",                     MuscleGroup = "Full Body",  CategoryId = hiit.Id },
-                new() { Name = "Jump Rope",                Description = "Classic conditioning drill for coordination and cardio.",            MuscleGroup = "Full Body",  CategoryId = hiit.Id },
-                new() { Name = "Box Jumps",                Description = "Explosive lower-body power exercise.",                              MuscleGroup = "Legs",       CategoryId = hiit.Id },
-                new() { Name = "Mountain Climbers",        Description = "Core and cardio drill performed in a plank position.",              MuscleGroup = "Core",       CategoryId = hiit.Id },
-                new() { Name = "Hip Flexor Stretch",       Description = "Lunge-based stretch opening up the hip flexors.",                  MuscleGroup = "Hips",       CategoryId = flexibility.Id },
-                new() { Name = "Hamstring Stretch",        Description = "Seated or standing stretch for the posterior chain.",              MuscleGroup = "Hamstrings", CategoryId = flexibility.Id },
-                new() { Name = "Thoracic Rotation",        Description = "Mobility drill for mid-spine rotation.",                           MuscleGroup = "Spine",      CategoryId = flexibility.Id },
-                new() { Name = "Pigeon Pose",              Description = "Deep hip-opener targeting the glutes and hip rotators.",            MuscleGroup = "Hips",       CategoryId = flexibility.Id },
-                new() { Name = "Shoulder Stretch",         Description = "Cross-body or doorway stretch for the shoulders.",                 MuscleGroup = "Shoulders",  CategoryId = flexibility.Id }
+                // Strength
+                new() { Name = "Bench Press",              Description = "Classic chest press using a barbell on a flat bench.",              MuscleGroup = "Chest",      CategoryId = strength.Id,     ExerciseType = "Strength" },
+                new() { Name = "Incline Dumbbell Press",   Description = "Upper-chest focused press on an incline bench.",                    MuscleGroup = "Chest",      CategoryId = strength.Id,     ExerciseType = "Strength" },
+                new() { Name = "Squat",                    Description = "Fundamental lower-body compound movement.",                         MuscleGroup = "Legs",       CategoryId = strength.Id,     ExerciseType = "Strength" },
+                new() { Name = "Romanian Deadlift",        Description = "Hip-hinge movement targeting hamstrings and glutes.",               MuscleGroup = "Hamstrings", CategoryId = strength.Id,     ExerciseType = "Strength" },
+                new() { Name = "Pull-Up",                  Description = "Bodyweight vertical pull targeting back and biceps.",               MuscleGroup = "Back",       CategoryId = strength.Id,     ExerciseType = "Strength" },
+                new() { Name = "Overhead Press",           Description = "Barbell or dumbbell press overhead targeting shoulders.",           MuscleGroup = "Shoulders",  CategoryId = strength.Id,     ExerciseType = "Strength" },
+                new() { Name = "Dumbbell Row",             Description = "Unilateral back exercise with a dumbbell.",                         MuscleGroup = "Back",       CategoryId = strength.Id,     ExerciseType = "Strength" },
+                // Powerlifting
+                new() { Name = "Deadlift",                 Description = "King of all lifts — full posterior chain movement.",                MuscleGroup = "Back",       CategoryId = powerlifting.Id, ExerciseType = "Strength" },
+                new() { Name = "Barbell Squat",            Description = "Competition squat with a barbell on the traps.",                    MuscleGroup = "Legs",       CategoryId = powerlifting.Id, ExerciseType = "Strength" },
+                new() { Name = "Powerlifting Bench Press", Description = "Competition-style paused bench press.",                            MuscleGroup = "Chest",      CategoryId = powerlifting.Id, ExerciseType = "Strength" },
+                // Cardio
+                new() { Name = "Running",                  Description = "Steady-state aerobic exercise outdoors or on treadmill.",           MuscleGroup = "Full Body",  CategoryId = cardio.Id,       ExerciseType = "Cardio" },
+                new() { Name = "Cycling",                  Description = "Low-impact cardio on a bike or stationary trainer.",                MuscleGroup = "Legs",       CategoryId = cardio.Id,       ExerciseType = "Cardio" },
+                new() { Name = "Rowing Machine",           Description = "Full-body low-impact cardiovascular exercise.",                     MuscleGroup = "Full Body",  CategoryId = cardio.Id,       ExerciseType = "Cardio" },
+                // HIIT
+                new() { Name = "Burpees",                  Description = "High-intensity full-body plyometric movement.",                     MuscleGroup = "Full Body",  CategoryId = hiit.Id,         ExerciseType = "Strength" },
+                new() { Name = "Jump Rope",                Description = "Classic conditioning drill for coordination and cardio.",            MuscleGroup = "Full Body",  CategoryId = hiit.Id,         ExerciseType = "Cardio" },
+                new() { Name = "Box Jumps",                Description = "Explosive lower-body power exercise.",                              MuscleGroup = "Legs",       CategoryId = hiit.Id,         ExerciseType = "Strength" },
+                new() { Name = "Mountain Climbers",        Description = "Core and cardio drill performed in a plank position.",              MuscleGroup = "Core",       CategoryId = hiit.Id,         ExerciseType = "Strength" },
+                // Flexibility
+                new() { Name = "Hip Flexor Stretch",       Description = "Lunge-based stretch opening up the hip flexors.",                  MuscleGroup = "Hips",       CategoryId = flexibility.Id,  ExerciseType = "Flexibility" },
+                new() { Name = "Hamstring Stretch",        Description = "Seated or standing stretch for the posterior chain.",              MuscleGroup = "Hamstrings", CategoryId = flexibility.Id,  ExerciseType = "Flexibility" },
+                new() { Name = "Thoracic Rotation",        Description = "Mobility drill for mid-spine rotation.",                           MuscleGroup = "Spine",      CategoryId = flexibility.Id,  ExerciseType = "Flexibility" },
+                new() { Name = "Pigeon Pose",              Description = "Deep hip-opener targeting the glutes and hip rotators.",            MuscleGroup = "Hips",       CategoryId = flexibility.Id,  ExerciseType = "Flexibility" },
+                new() { Name = "Shoulder Stretch",         Description = "Cross-body or doorway stretch for the shoulders.",                 MuscleGroup = "Shoulders",  CategoryId = flexibility.Id,  ExerciseType = "Flexibility" }
             };
 
             var toAdd = allExercises.Where(e => !existing.Contains(e.Name)).ToList();
@@ -95,6 +100,19 @@ public static class DbSeeder
                 await context.SaveChangesAsync();
             }
         }
+
+        // Fix ExerciseType for existing exercises that were seeded before this field existed
+        var cardioNames = new HashSet<string> { "Running", "Cycling", "Rowing Machine", "Jump Rope" };
+        var flexibilityNames = new HashSet<string> { "Hip Flexor Stretch", "Hamstring Stretch", "Thoracic Rotation", "Pigeon Pose", "Shoulder Stretch" };
+        var exercisesWithWrongType = context.Exercises.Where(e => e.ExerciseType == "").ToList();
+        foreach (var e in exercisesWithWrongType)
+        {
+            e.ExerciseType = cardioNames.Contains(e.Name) ? "Cardio"
+                : flexibilityNames.Contains(e.Name) ? "Flexibility"
+                : "Strength";
+        }
+        if (exercisesWithWrongType.Any())
+            await context.SaveChangesAsync();
 
         // Seed workout plans
         if (!context.WorkoutPlans.Any())

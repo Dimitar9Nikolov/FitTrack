@@ -22,6 +22,14 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .Property(we => we.WeightKg)
             .HasColumnType("decimal(6,2)");
 
+        builder.Entity<WorkoutExercise>()
+            .Property(we => we.SpeedKmh)
+            .HasColumnType("decimal(5,1)");
+
+        builder.Entity<WorkoutExercise>()
+            .Property(we => we.Incline)
+            .HasColumnType("decimal(4,1)");
+
         builder.Entity<Workout>()
             .HasOne(w => w.WorkoutPlan)
             .WithMany(wp => wp.Workouts)

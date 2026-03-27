@@ -71,9 +71,7 @@
                         <tr>
                             <th>Exercise</th>
                             <th>Muscle</th>
-                            <th class="text-center">Sets</th>
-                            <th class="text-center">Reps</th>
-                            <th class="text-center">Weight (kg)</th>
+                            <th class="text-center">Details</th>
                             <th></th>
                         </tr>
                         </thead>
@@ -81,12 +79,47 @@
                         @foreach (var ex in Model.Exercises)
                         {
                             <tr>
-                                <td class="fw-medium">@ex.ExerciseName</td>
+                                <td class="fw-medium">
+                                    @ex.ExerciseName
+                                    @if (ex.ExerciseType == "Cardio")
+                                    {
+                                        <span class="badge bg-info text-dark ms-1">Cardio</span>
+                                    }
+                                    else if (ex.ExerciseType == "Flexibility")
+                                    {
+                                        <span class="badge bg-success ms-1">Flexibility</span>
+                                    }
+                                </td>
                                 <td><span class="badge bg-light text-dark border">@ex.MuscleGroup</span></td>
-                                <td class="text-center">@ex.Sets</td>
-                                <td class="text-center">@ex.Reps</td>
                                 <td class="text-center">
-                                    @(ex.WeightKg > 0 ? $"{ex.WeightKg} kg" : "BW")
+                                    @if (ex.ExerciseType == "Cardio")
+                                    {
+                                        <span class="text-muted small">
+                                            @(ex.CardioMinutes.HasValue ? $"{ex.CardioMinutes} min" : "—")
+                                            @if (ex.SpeedKmh.HasValue && ex.SpeedKmh > 0)
+                                            {
+                                                <text> · @ex.SpeedKmh km/h</text>
+                                            }
+                                            @if (ex.Incline.HasValue && ex.Incline > 0)
+                                            {
+                                                <text> · @ex.Incline% incline</text>
+                                            }
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">
+                                            @ex.Sets × @ex.Reps reps
+                                            @if (ex.WeightKg > 0)
+                                            {
+                                                <text> · @ex.WeightKg kg</text>
+                                            }
+                                            else
+                                            {
+                                                <text> · BW</text>
+                                            }
+                                        </span>
+                                    }
                                 </td>
                                 <td class="text-end">
                                     <form asp-action="RemoveExercise" method="post" class="d-inline">
@@ -115,34 +148,59 @@
                     @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="AddExerciseForm.WorkoutId"/>
 
-                    <div class="mb-2">
+                    <div class="mb-3">
                         <label class="form-label small fw-medium">Exercise</label>
-                        <select asp-for="AddExerciseForm.ExerciseId"
+                        <select id="exerciseSelect"
+                                asp-for="AddExerciseForm.ExerciseId"
                                 asp-items="Model.AddExerciseForm.Exercises"
                                 class="form-select form-select-sm">
                             <option value="">— pick exercise —</option>
                         </select>
                     </div>
 
-                    <div class="row g-2 mb-2">
-                        <div class="col-4">
-                            <label class="form-label small fw-medium">Sets</label>
-                            <input asp-for="AddExerciseForm.Sets" type="number"
-                                   class="form-control form-control-sm" min="1" max="100"/>
-                        </div>
-                        <div class="col-4">
-                            <label class="form-label small fw-medium">Reps</label>
-                            <input asp-for="AddExerciseForm.Reps" type="number"
-                                   class="form-control form-control-sm" min="1" max="1000"/>
-                        </div>
-                        <div class="col-4">
-                            <label class="form-label small fw-medium">kg</label>
-                            <input asp-for="AddExerciseForm.WeightKg" type="number" step="0.5"
-                                   class="form-control form-control-sm" min="0" max="1000"/>
+                    <!-- Strength fields -->
+                    <div id="strengthFields">
+                        <div class="row g-2 mb-2">
+                            <div class="col-4">
+                                <label class="form-label small fw-medium">Sets</label>
+                                <input asp-for="AddExerciseForm.Sets" type="number"
+                                       class="form-control form-control-sm" min="1" max="100"/>
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small fw-medium">Reps</label>
+                                <input asp-for="AddExerciseForm.Reps" type="number"
+                                       class="form-control form-control-sm" min="1" max="1000"/>
+                            </div>
+                            <div class="col-4">
+                                <label class="form-label small fw-medium">kg</label>
+                                <input asp-for="AddExerciseForm.WeightKg" type="number" step="0.5"
+                                       class="form-control form-control-sm" min="0" max="1000"/>
+                            </div>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-sm w-100">+ Add</button>
+                    <!-- Cardio fields -->
+                    <div id="cardioFields" style="display:none;">
+                        <div class="mb-2">
+                            <label class="form-label small fw-medium">Duration (min)</label>
+                            <input asp-for="AddExerciseForm.CardioMinutes" type="number"
+                                   class="form-control form-control-sm" min="1" max="600"/>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label small fw-medium">Speed (km/h)</label>
+                                <input asp-for="AddExerciseForm.SpeedKmh" type="number" step="0.5"
+                                       class="form-control form-control-sm" min="0" max="100"/>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-medium">Incline (%)</label>
+                                <input asp-for="AddExerciseForm.Incline" type="number" step="0.5"
+                                       class="form-control form-control-sm" min="0" max="30"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-sm w-100 mt-1">+ Add</button>
                 </form>
             </div>
         </div>
@@ -154,3 +212,29 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        const exerciseTypeMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AddExerciseForm.ExerciseTypeMap));
+
+        const exerciseSelect  = document.getElementById('exerciseSelect');
+        const strengthFields  = document.getElementById('strengthFields');
+        const cardioFields    = document.getElementById('cardioFields');
+
+        function toggleFields() {
+            const selectedId = parseInt(exerciseSelect.value);
+            const type = exerciseTypeMap[selectedId] ?? 'Strength';
+
+            if (type === 'Cardio') {
+                strengthFields.style.display = 'none';
+                cardioFields.style.display   = '';
+            } else {
+                strengthFields.style.display = '';
+                cardioFields.style.display   = 'none';
+            }
+        }
+
+        exerciseSelect.addEventListener('change', toggleFields);
+        toggleFields(); // run on page load in case of re-post
+    </script>
+}
