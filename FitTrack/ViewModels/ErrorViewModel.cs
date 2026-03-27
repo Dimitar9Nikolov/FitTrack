@@ -1,4 +1,4 @@
-namespace FitTrack.Models;
+namespace FitTrack.ViewModels;
 
 public class ErrorViewModel
 {

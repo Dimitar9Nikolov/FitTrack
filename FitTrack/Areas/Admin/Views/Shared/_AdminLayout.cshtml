@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>@ViewData["Title"] — FitTrack Admin</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+    <style>
+        body { background-color: #f4f6f9; }
+        .admin-sidebar {
+            min-height: 100vh;
+            background-color: #212529;
+            padding-top: 1rem;
+        }
+        .admin-sidebar .nav-link {
+            color: #adb5bd;
+            padding: .6rem 1.25rem;
+            border-radius: 6px;
+            margin-bottom: 2px;
+        }
+        .admin-sidebar .nav-link:hover,
+        .admin-sidebar .nav-link.active {
+            color: #fff;
+            background-color: #343a40;
+        }
+        .admin-sidebar .nav-link .bi { margin-right: 8px; }
+        .admin-brand {
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.2rem;
+            padding: .5rem 1.25rem 1rem;
+            display: block;
+            text-decoration: none;
+            border-bottom: 1px solid #343a40;
+            margin-bottom: .75rem;
+        }
+        .admin-brand span { color: #0d6efd; }
+        .main-content { padding: 2rem; }
+        .stat-card { border: none; border-radius: 12px; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-2 d-none d-md-block admin-sidebar px-2">
+            <a class="admin-brand" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                Fit<span>Track</span> <small class="text-muted fw-normal fs-6">Admin</small>
+            </a>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")"
+                       asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Category" ? "active" : "")"
+                       asp-area="Admin" asp-controller="Category" asp-action="Index">
+                        Categories
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Exercise" ? "active" : "")"
+                       asp-area="Admin" asp-controller="Exercise" asp-action="Index">
+                        Exercises
+                    </a>
+                </li>
+                <li class="nav-item mt-3 border-top border-secondary pt-3">
+                    <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">
+                        ← Back to Site
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-10 ms-sm-auto main-content">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @RenderBody()
+        </main>
+    </div>
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,29 @@
+@model CategoryFormViewModel
+@{ ViewData["Title"] = "Edit Category"; }
+
+<div class="d-flex align-items-center mb-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary me-3">← Back</a>
+    <h2 class="fw-bold mb-0">Edit Category</h2>
+</div>
+
+<div class="card shadow-sm" style="max-width: 480px;">
+    <div class="card-body p-4">
+        <form asp-action="Edit" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <input type="hidden" asp-for="Id"/>
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label fw-medium"></label>
+                <input asp-for="Name" class="form-control"/>
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial"/> }

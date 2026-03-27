@@ -1,0 +1,46 @@
+@model IEnumerable<FitTrack.Models.Exercise>
+@{ ViewData["Title"] = "Exercises"; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0">Exercises</h2>
+    <a asp-action="Create" class="btn btn-primary">+ Add Exercise</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Muscle Group</th>
+                <th>Category</th>
+                <th class="text-end">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var ex in Model)
+            {
+                <tr>
+                    <td class="text-muted">@ex.Id</td>
+                    <td class="fw-medium">@ex.Name</td>
+                    <td>@ex.MuscleGroup</td>
+                    <td><span class="badge bg-light text-dark border">@ex.Category.Name</span></td>
+                    <td class="text-end">
+                        <a asp-action="Edit" asp-route-id="@ex.Id"
+                           class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@ex.Id"
+                           class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">No exercises yet.</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

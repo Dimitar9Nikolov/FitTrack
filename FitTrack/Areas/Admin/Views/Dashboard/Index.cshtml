@@ -1,0 +1,61 @@
+@model DashboardViewModel
+@{ ViewData["Title"] = "Dashboard"; }
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0">Dashboard</h2>
+    <span class="text-muted">Welcome back, Admin!</span>
+</div>
+
+<div class="row g-4">
+    <div class="col-sm-6 col-xl-4">
+        <div class="card stat-card shadow-sm text-white bg-primary">
+            <div class="card-body py-4">
+                <div class="fs-1 fw-bold">@Model.TotalUsers</div>
+                <div class="mt-1 opacity-75">Registered Users</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-4">
+        <div class="card stat-card shadow-sm text-white bg-success">
+            <div class="card-body py-4">
+                <div class="fs-1 fw-bold">@Model.TotalExercises</div>
+                <div class="mt-1 opacity-75">Exercises</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-4">
+        <div class="card stat-card shadow-sm text-white bg-info">
+            <div class="card-body py-4">
+                <div class="fs-1 fw-bold">@Model.TotalCategories</div>
+                <div class="mt-1 opacity-75">Categories</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-4">
+        <div class="card stat-card shadow-sm text-white bg-warning">
+            <div class="card-body py-4">
+                <div class="fs-1 fw-bold">@Model.TotalWorkoutPlans</div>
+                <div class="mt-1 opacity-75">Workout Plans</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-4">
+        <div class="card stat-card shadow-sm text-white bg-secondary">
+            <div class="card-body py-4">
+                <div class="fs-1 fw-bold">@Model.TotalWorkouts</div>
+                <div class="mt-1 opacity-75">Logged Workouts</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5 g-3">
+    <div class="col-auto">
+        <a asp-area="Admin" asp-controller="Category" asp-action="Create"
+           class="btn btn-outline-primary">+ New Category</a>
+    </div>
+    <div class="col-auto">
+        <a asp-area="Admin" asp-controller="Exercise" asp-action="Create"
+           class="btn btn-outline-success">+ New Exercise</a>
+    </div>
+</div>
