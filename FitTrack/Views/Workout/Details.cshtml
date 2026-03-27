@@ -1,0 +1,156 @@
+@model FitTrack.ViewModels.Workout.WorkoutDetailsViewModel
+@{ ViewData["Title"] = $"Workout — {Model.Date:dd MMM yyyy}"; }
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["Success"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["Error"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="d-flex align-items-center mb-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary me-3">← My Workouts</a>
+    <h2 class="fw-bold mb-0">@Model.Date.ToString("dddd, dd MMM yyyy")</h2>
+</div>
+
+<div class="row g-4">
+
+    <!-- Left: info + exercise list -->
+    <div class="col-lg-8">
+
+        <!-- Workout summary -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="row text-center g-3">
+                    <div class="col">
+                        <div class="fs-3 fw-bold text-primary">@Model.DurationMinutes</div>
+                        <div class="text-muted small">minutes</div>
+                    </div>
+                    <div class="col">
+                        <div class="fs-3 fw-bold text-success">@Model.Exercises.Count</div>
+                        <div class="text-muted small">exercises</div>
+                    </div>
+                    @if (Model.WorkoutPlanTitle != null)
+                    {
+                        <div class="col">
+                            <div class="fw-bold">
+                                <a asp-controller="WorkoutPlan" asp-action="Details"
+                                   asp-route-id="@Model.WorkoutPlanId">@Model.WorkoutPlanTitle</a>
+                            </div>
+                            <div class="text-muted small">plan</div>
+                        </div>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Notes))
+                {
+                    <hr/>
+                    <p class="mb-0 text-muted"><em>@Model.Notes</em></p>
+                }
+            </div>
+        </div>
+
+        <!-- Exercise list -->
+        <h5 class="fw-bold mb-3">Exercises Logged</h5>
+
+        @if (!Model.Exercises.Any())
+        {
+            <div class="alert alert-info">No exercises added yet — use the form on the right to add some!</div>
+        }
+        else
+        {
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Exercise</th>
+                            <th>Muscle</th>
+                            <th class="text-center">Sets</th>
+                            <th class="text-center">Reps</th>
+                            <th class="text-center">Weight (kg)</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var ex in Model.Exercises)
+                        {
+                            <tr>
+                                <td class="fw-medium">@ex.ExerciseName</td>
+                                <td><span class="badge bg-light text-dark border">@ex.MuscleGroup</span></td>
+                                <td class="text-center">@ex.Sets</td>
+                                <td class="text-center">@ex.Reps</td>
+                                <td class="text-center">
+                                    @(ex.WeightKg > 0 ? $"{ex.WeightKg} kg" : "BW")
+                                </td>
+                                <td class="text-end">
+                                    <form asp-action="RemoveExercise" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@ex.Id"/>
+                                        <input type="hidden" name="workoutId" value="@Model.Id"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Remove this exercise?')">✕</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Right: Add exercise form -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 sticky-top" style="top:1rem;">
+            <div class="card-header bg-primary text-white fw-bold">Add Exercise</div>
+            <div class="card-body p-3">
+                <form asp-action="AddExercise" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="AddExerciseForm.WorkoutId"/>
+
+                    <div class="mb-2">
+                        <label class="form-label small fw-medium">Exercise</label>
+                        <select asp-for="AddExerciseForm.ExerciseId"
+                                asp-items="Model.AddExerciseForm.Exercises"
+                                class="form-select form-select-sm">
+                            <option value="">— pick exercise —</option>
+                        </select>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-4">
+                            <label class="form-label small fw-medium">Sets</label>
+                            <input asp-for="AddExerciseForm.Sets" type="number"
+                                   class="form-control form-control-sm" min="1" max="100"/>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-medium">Reps</label>
+                            <input asp-for="AddExerciseForm.Reps" type="number"
+                                   class="form-control form-control-sm" min="1" max="1000"/>
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-medium">kg</label>
+                            <input asp-for="AddExerciseForm.WeightKg" type="number" step="0.5"
+                                   class="form-control form-control-sm" min="0" max="1000"/>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-sm w-100">+ Add</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="mt-3 d-grid gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary btn-sm">Edit Workout</a>
+            <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm">Delete Workout</a>
+        </div>
+    </div>
+</div>
