@@ -1,0 +1,80 @@
+@model IEnumerable<FitTrack.ViewModels.WorkoutPlan.WorkoutPlanListItemViewModel>
+@using System.Security.Claims
+@{
+    ViewData["Title"] = "Workout Plans";
+    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    var difficulties = new[] { "Beginner", "Intermediate", "Advanced" };
+    var selected = ViewBag.SelectedDifficulty as string;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold mb-0">Workout Plans</h2>
+    @if (User.Identity!.IsAuthenticated)
+    {
+        <a asp-action="Create" class="btn btn-primary">+ Create Plan</a>
+    }
+</div>
+
+<!-- Difficulty filter -->
+<div class="mb-4 d-flex gap-2 flex-wrap">
+    <a asp-action="Index" class="btn btn-sm @(selected == null ? "btn-dark" : "btn-outline-dark")">All</a>
+    @foreach (var d in difficulties)
+    {
+        <a asp-action="Index" asp-route-difficulty="@d"
+           class="btn btn-sm @(selected == d ? "btn-dark" : "btn-outline-dark")">@d</a>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center text-muted py-5">
+        <p class="fs-5">No workout plans found.</p>
+        @if (User.Identity.IsAuthenticated)
+        {
+            <a asp-action="Create" class="btn btn-outline-primary mt-2">Create the first one!</a>
+        }
+    </div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+        @foreach (var plan in Model)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge @DifficultyBadge(plan.Difficulty)">@plan.Difficulty</span>
+                            @if (!plan.IsPublic)
+                            {
+                                <span class="badge bg-secondary">Private</span>
+                            }
+                        </div>
+                        <h5 class="card-title fw-bold mb-1">@plan.Title</h5>
+                        <p class="card-text text-muted small mb-3">
+                            @(plan.Description.Length > 100 ? plan.Description[..100] + "…" : plan.Description)
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">by @plan.CreatorName</small>
+                            <small class="text-muted">@plan.WorkoutCount workout(s)</small>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-3">
+                        <a asp-action="Details" asp-route-id="@plan.Id"
+                           class="btn btn-sm btn-outline-primary w-100">View Plan</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@functions {
+    static string DifficultyBadge(string d) => d switch
+    {
+        "Beginner" => "bg-success",
+        "Intermediate" => "bg-warning text-dark",
+        "Advanced" => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

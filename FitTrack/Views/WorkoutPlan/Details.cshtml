@@ -1,0 +1,87 @@
+@model FitTrack.ViewModels.WorkoutPlan.WorkoutPlanDetailsViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="d-flex align-items-center mb-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary me-3">← Back to Plans</a>
+    <h2 class="fw-bold mb-0">@Model.Title</h2>
+</div>
+
+<div class="row g-4">
+    <!-- Plan info -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="d-flex gap-2 mb-3">
+                    <span class="badge fs-6 @DifficultyBadge(Model.Difficulty)">@Model.Difficulty</span>
+                    @if (!Model.IsPublic)
+                    {
+                        <span class="badge bg-secondary fs-6">Private</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-light text-dark border fs-6">Public</span>
+                    }
+                </div>
+
+                <p class="lead">@Model.Description</p>
+
+                <hr/>
+
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Created by</dt>
+                    <dd class="col-sm-9">@Model.CreatorName</dd>
+                    <dt class="col-sm-3">Workouts logged</dt>
+                    <dd class="col-sm-9">@Model.WorkoutCount</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4 d-grid gap-2">
+                @if (User.Identity!.IsAuthenticated)
+                {
+                    <a asp-controller="Workout" asp-action="Create"
+                       asp-route-planId="@Model.Id"
+                       class="btn btn-primary">Start a Workout</a>
+                }
+                else
+                {
+                    <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary">
+                        Log in to start a workout
+                    </a>
+                }
+
+                @if (Model.IsOwner)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.Id"
+                       class="btn btn-outline-primary">Edit Plan</a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id"
+                       class="btn btn-outline-danger">Delete Plan</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    static string DifficultyBadge(string d) => d switch
+    {
+        "Beginner" => "bg-success",
+        "Intermediate" => "bg-warning text-dark",
+        "Advanced" => "bg-danger",
+        _ => "bg-secondary"
+    };
+}
