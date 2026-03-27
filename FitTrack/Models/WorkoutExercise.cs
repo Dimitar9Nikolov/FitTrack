@@ -16,13 +16,11 @@ public class WorkoutExercise
     [ForeignKey(nameof(ExerciseId))]
     public Exercise Exercise { get; set; } = null!;
 
-    // ── Strength fields ────────────────────────────────────────────────────────
-    public int Sets { get; set; }
-    public int Reps { get; set; }
-    public decimal WeightKg { get; set; }
-
     // ── Cardio fields ──────────────────────────────────────────────────────────
     public int? CardioMinutes { get; set; }
     public decimal? SpeedKmh { get; set; }
     public decimal? Incline { get; set; }
+
+    // ── Strength sets (one row per set) ────────────────────────────────────────
+    public ICollection<WorkoutExerciseSet> ExerciseSets { get; set; } = new List<WorkoutExerciseSet>();
 }

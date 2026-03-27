@@ -8,10 +8,8 @@ public class WorkoutExerciseViewModel
     public string CategoryName { get; set; } = string.Empty;
     public string ExerciseType { get; set; } = "Strength";
 
-    // Strength
-    public int Sets { get; set; }
-    public int Reps { get; set; }
-    public decimal WeightKg { get; set; }
+    // Strength — per-set breakdown
+    public List<WorkoutSetViewModel> Sets { get; set; } = new();
 
     // Cardio
     public int? CardioMinutes { get; set; }

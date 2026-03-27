@@ -3,6 +3,16 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace FitTrack.ViewModels.Workout;
 
+/// <summary>One row in the per-set input table.</summary>
+public class SetInputModel
+{
+    [Range(1, 1000)]
+    public int Reps { get; set; } = 10;
+
+    [Range(0, 1000)]
+    public decimal WeightKg { get; set; } = 0;
+}
+
 public class WorkoutExerciseFormViewModel
 {
     public int WorkoutId { get; set; }
@@ -11,16 +21,13 @@ public class WorkoutExerciseFormViewModel
     [Display(Name = "Exercise")]
     public int ExerciseId { get; set; }
 
-    // ── Strength ───────────────────────────────────────────────────────────────
-    [Range(1, 100)]
-    public int Sets { get; set; } = 3;
-
-    [Range(1, 1000)]
-    public int Reps { get; set; } = 10;
-
-    [Range(0, 1000)]
-    [Display(Name = "Weight (kg)")]
-    public decimal WeightKg { get; set; } = 0;
+    // ── Strength — individual sets ─────────────────────────────────────────────
+    public List<SetInputModel> SetData { get; set; } = new List<SetInputModel>
+    {
+        new SetInputModel(),
+        new SetInputModel(),
+        new SetInputModel()
+    };
 
     // ── Cardio ─────────────────────────────────────────────────────────────────
     [Range(1, 600)]

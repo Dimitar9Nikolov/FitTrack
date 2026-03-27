@@ -1,0 +1,71 @@
+@model FitTrack.ViewModels.Shared.PaginationViewModel
+
+@if (Model.TotalPages <= 1) { return; }
+
+@{
+    int window = 2;
+    int start  = Math.Max(1, Model.CurrentPage - window);
+    int end    = Math.Min(Model.TotalPages, Model.CurrentPage + window);
+}
+
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center flex-wrap">
+
+        @* Previous *@
+        @{
+            var prevRoute = new Dictionary<string, string?>(Model.RouteValues) { ["page"] = (Model.CurrentPage - 1).ToString() };
+        }
+        <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+            <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action"
+               asp-all-route-data="prevRoute">&laquo;</a>
+        </li>
+
+        @* First page + leading ellipsis *@
+        @if (start > 1)
+        {
+            var firstRoute = new Dictionary<string, string?>(Model.RouteValues) { ["page"] = "1" };
+            <li class="page-item">
+                <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action"
+                   asp-all-route-data="firstRoute">1</a>
+            </li>
+            if (start > 2)
+            {
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+            }
+        }
+
+        @* Window of page numbers *@
+        @for (int p = start; p <= end; p++)
+        {
+            var pageRoute = new Dictionary<string, string?>(Model.RouteValues) { ["page"] = p.ToString() };
+            <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action"
+                   asp-all-route-data="pageRoute">@p</a>
+            </li>
+        }
+
+        @* Trailing ellipsis + last page *@
+        @if (end < Model.TotalPages)
+        {
+            if (end < Model.TotalPages - 1)
+            {
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+            }
+            var lastRoute = new Dictionary<string, string?>(Model.RouteValues) { ["page"] = Model.TotalPages.ToString() };
+            <li class="page-item">
+                <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action"
+                   asp-all-route-data="lastRoute">@Model.TotalPages</a>
+            </li>
+        }
+
+        @* Next *@
+        @{
+            var nextRoute = new Dictionary<string, string?>(Model.RouteValues) { ["page"] = (Model.CurrentPage + 1).ToString() };
+        }
+        <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+            <a class="page-link" asp-controller="@Model.Controller" asp-action="@Model.Action"
+               asp-all-route-data="nextRoute">&raquo;</a>
+        </li>
+
+    </ul>
+</nav>

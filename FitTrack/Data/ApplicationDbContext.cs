@@ -12,15 +12,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<WorkoutPlan> WorkoutPlans { get; set; }
     public DbSet<Workout> Workouts { get; set; }
     public DbSet<WorkoutExercise> WorkoutExercises { get; set; }
+    public DbSet<WorkoutExerciseSet> WorkoutExerciseSets { get; set; }
     public DbSet<WorkoutPlanExercise> WorkoutPlanExercises { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-
-        builder.Entity<WorkoutExercise>()
-            .Property(we => we.WeightKg)
-            .HasColumnType("decimal(6,2)");
 
         builder.Entity<WorkoutExercise>()
             .Property(we => we.SpeedKmh)

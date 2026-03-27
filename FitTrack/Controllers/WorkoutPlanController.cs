@@ -19,35 +19,54 @@ public class WorkoutPlanController : Controller
     }
 
     // GET: /WorkoutPlan
-    public async Task<IActionResult> Index(string? difficulty)
+    public async Task<IActionResult> Index(string? search, string? difficulty, int page = 1)
     {
+        const int pageSize = 6;
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         var query = _context.WorkoutPlans
             .Include(wp => wp.Creator)
             .Include(wp => wp.Workouts)
+            .Include(wp => wp.PlanExercises)
             .Where(wp => wp.IsPublic || wp.CreatorId == userId);
 
-        if (!string.IsNullOrEmpty(difficulty))
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(wp => wp.Title.Contains(search) || wp.Description.Contains(search));
+
+        if (!string.IsNullOrWhiteSpace(difficulty))
             query = query.Where(wp => wp.Difficulty == difficulty);
+
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        page = Math.Max(1, Math.Min(page, Math.Max(1, totalPages)));
 
         var plans = await query
             .OrderByDescending(wp => wp.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(wp => new WorkoutPlanListItemViewModel
             {
-                Id = wp.Id,
-                Title = wp.Title,
-                Description = wp.Description,
-                Difficulty = wp.Difficulty,
-                IsPublic = wp.IsPublic,
-                CreatorId = wp.CreatorId,
-                CreatorName = wp.Creator.DisplayName,
-                WorkoutCount = wp.Workouts.Count
+                Id            = wp.Id,
+                Title         = wp.Title,
+                Description   = wp.Description,
+                Difficulty    = wp.Difficulty,
+                IsPublic      = wp.IsPublic,
+                CreatorId     = wp.CreatorId,
+                CreatorName   = wp.Creator.DisplayName,
+                WorkoutCount  = wp.Workouts.Count,
+                ExerciseCount = wp.PlanExercises.Count
             })
             .ToListAsync();
 
-        ViewBag.SelectedDifficulty = difficulty;
-        return View(plans);
+        return View(new WorkoutPlanIndexViewModel
+        {
+            Plans       = plans,
+            Search      = search,
+            Difficulty  = difficulty,
+            CurrentPage = page,
+            TotalPages  = totalPages,
+            TotalCount  = totalCount
+        });
     }
 
     // GET: /WorkoutPlan/Details/5

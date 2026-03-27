@@ -66,13 +66,13 @@
         {
             <div class="card shadow-sm border-0">
                 <div class="card-body p-0">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-hover mb-0 align-middle">
                         <thead class="table-light">
                         <tr>
                             <th>Exercise</th>
                             <th>Muscle</th>
-                            <th class="text-center">Details</th>
-                            <th></th>
+                            <th>Sets / Details</th>
+                            <th style="width:50px"></th>
                         </tr>
                         </thead>
                         <tbody>
@@ -82,43 +82,32 @@
                                 <td class="fw-medium">
                                     @ex.ExerciseName
                                     @if (ex.ExerciseType == "Cardio")
-                                    {
-                                        <span class="badge bg-info text-dark ms-1">Cardio</span>
-                                    }
-                                    else if (ex.ExerciseType == "Flexibility")
-                                    {
-                                        <span class="badge bg-success ms-1">Flexibility</span>
-                                    }
+                                    { <span class="badge bg-info text-dark ms-1">Cardio</span> }
                                 </td>
                                 <td><span class="badge bg-light text-dark border">@ex.MuscleGroup</span></td>
-                                <td class="text-center">
+                                <td>
                                     @if (ex.ExerciseType == "Cardio")
                                     {
                                         <span class="text-muted small">
                                             @(ex.CardioMinutes.HasValue ? $"{ex.CardioMinutes} min" : "—")
-                                            @if (ex.SpeedKmh.HasValue && ex.SpeedKmh > 0)
-                                            {
-                                                <text> · @ex.SpeedKmh km/h</text>
-                                            }
-                                            @if (ex.Incline.HasValue && ex.Incline > 0)
-                                            {
-                                                <text> · @ex.Incline% incline</text>
-                                            }
+                                            @if (ex.SpeedKmh is > 0) { <text> · @ex.SpeedKmh km/h</text> }
+                                            @if (ex.Incline is > 0)  { <text> · @ex.Incline% incline</text> }
                                         </span>
+                                    }
+                                    else if (ex.Sets.Any())
+                                    {
+                                        <div class="d-flex flex-wrap gap-1">
+                                            @foreach (var s in ex.Sets)
+                                            {
+                                                <span class="badge bg-secondary">
+                                                    @s.Reps reps@(s.WeightKg > 0 ? $" · {s.WeightKg}kg" : " BW")
+                                                </span>
+                                            }
+                                        </div>
                                     }
                                     else
                                     {
-                                        <span class="text-muted small">
-                                            @ex.Sets × @ex.Reps reps
-                                            @if (ex.WeightKg > 0)
-                                            {
-                                                <text> · @ex.WeightKg kg</text>
-                                            }
-                                            else
-                                            {
-                                                <text> · BW</text>
-                                            }
-                                        </span>
+                                        <span class="text-muted small">No sets logged</span>
                                     }
                                 </td>
                                 <td class="text-end">
@@ -158,25 +147,53 @@
                         </select>
                     </div>
 
-                    <!-- Strength fields -->
+                    <!-- Strength: per-set table -->
                     <div id="strengthFields">
-                        <div class="row g-2 mb-2">
-                            <div class="col-4">
-                                <label class="form-label small fw-medium">Sets</label>
-                                <input asp-for="AddExerciseForm.Sets" type="number"
-                                       class="form-control form-control-sm" min="1" max="100"/>
-                            </div>
-                            <div class="col-4">
-                                <label class="form-label small fw-medium">Reps</label>
-                                <input asp-for="AddExerciseForm.Reps" type="number"
-                                       class="form-control form-control-sm" min="1" max="1000"/>
-                            </div>
-                            <div class="col-4">
-                                <label class="form-label small fw-medium">kg</label>
-                                <input asp-for="AddExerciseForm.WeightKg" type="number" step="0.5"
-                                       class="form-control form-control-sm" min="0" max="1000"/>
-                            </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="form-label small fw-medium mb-0">Sets</span>
+                            <button type="button" class="btn btn-sm btn-outline-success py-0 px-2"
+                                    onclick="addSet()">+ Set</button>
                         </div>
+                        <table class="table table-sm mb-2" id="setsTable">
+                            <thead>
+                            <tr class="text-muted small">
+                                <th style="width:28px">#</th>
+                                <th>Reps</th>
+                                <th>kg</th>
+                                <th style="width:28px"></th>
+                            </tr>
+                            </thead>
+                            <tbody id="setsContainer">
+                            @for (int i = 0; i < Model.AddExerciseForm.SetData.Count; i++)
+                            {
+                                <tr class="set-row">
+                                    <td class="text-muted small align-middle">
+                                        <span class="set-number">@(i + 1)</span>
+                                    </td>
+                                    <td>
+                                        <input type="number"
+                                               name="AddExerciseForm.SetData[@i].Reps"
+                                               value="@Model.AddExerciseForm.SetData[i].Reps"
+                                               class="form-control form-control-sm"
+                                               style="width:70px" min="1" max="1000"/>
+                                    </td>
+                                    <td>
+                                        <input type="number"
+                                               name="AddExerciseForm.SetData[@i].WeightKg"
+                                               value="@Model.AddExerciseForm.SetData[i].WeightKg"
+                                               step="0.5"
+                                               class="form-control form-control-sm"
+                                               style="width:75px" min="0" max="1000"/>
+                                    </td>
+                                    <td>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger py-0 px-1"
+                                                onclick="removeSet(this)">✕</button>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
                     </div>
 
                     <!-- Cardio fields -->
@@ -215,26 +232,50 @@
 
 @section Scripts {
     <script>
+        // ── Exercise type toggle ───────────────────────────────────────────────
         const exerciseTypeMap = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AddExerciseForm.ExerciseTypeMap));
-
         const exerciseSelect  = document.getElementById('exerciseSelect');
         const strengthFields  = document.getElementById('strengthFields');
         const cardioFields    = document.getElementById('cardioFields');
 
         function toggleFields() {
-            const selectedId = parseInt(exerciseSelect.value);
-            const type = exerciseTypeMap[selectedId] ?? 'Strength';
-
-            if (type === 'Cardio') {
-                strengthFields.style.display = 'none';
-                cardioFields.style.display   = '';
-            } else {
-                strengthFields.style.display = '';
-                cardioFields.style.display   = 'none';
-            }
+            const type = exerciseTypeMap[parseInt(exerciseSelect.value)] ?? 'Strength';
+            strengthFields.style.display = type === 'Cardio' ? 'none' : '';
+            cardioFields.style.display   = type === 'Cardio' ? ''     : 'none';
         }
 
         exerciseSelect.addEventListener('change', toggleFields);
-        toggleFields(); // run on page load in case of re-post
+        toggleFields();
+
+        // ── Dynamic set rows ──────────────────────────────────────────────────
+        function addSet() {
+            const tbody = document.getElementById('setsContainer');
+            const idx   = tbody.querySelectorAll('.set-row').length;
+            const tr    = document.createElement('tr');
+            tr.className = 'set-row';
+            tr.innerHTML = `
+                <td class="text-muted small align-middle"><span class="set-number">${idx + 1}</span></td>
+                <td><input type="number" name="AddExerciseForm.SetData[${idx}].Reps" value="10"
+                           class="form-control form-control-sm" style="width:70px" min="1" max="1000"></td>
+                <td><input type="number" name="AddExerciseForm.SetData[${idx}].WeightKg" value="0" step="0.5"
+                           class="form-control form-control-sm" style="width:75px" min="0" max="1000"></td>
+                <td><button type="button" class="btn btn-sm btn-outline-danger py-0 px-1"
+                            onclick="removeSet(this)">✕</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function removeSet(btn) {
+            btn.closest('.set-row').remove();
+            renumberSets();
+        }
+
+        function renumberSets() {
+            document.querySelectorAll('#setsContainer .set-row').forEach((row, idx) => {
+                row.querySelector('.set-number').textContent = idx + 1;
+                row.querySelector('input[name$=".Reps"]').name    = `AddExerciseForm.SetData[${idx}].Reps`;
+                row.querySelector('input[name$=".WeightKg"]').name = `AddExerciseForm.SetData[${idx}].WeightKg`;
+            });
+        }
     </script>
 }

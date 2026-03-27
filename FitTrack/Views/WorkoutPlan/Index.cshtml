@@ -1,11 +1,7 @@
-@model IEnumerable<FitTrack.ViewModels.WorkoutPlan.WorkoutPlanListItemViewModel>
+@model FitTrack.ViewModels.WorkoutPlan.WorkoutPlanIndexViewModel
+@using FitTrack.ViewModels.Shared
 @using System.Security.Claims
-@{
-    ViewData["Title"] = "Workout Plans";
-    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-    var difficulties = new[] { "Beginner", "Intermediate", "Advanced" };
-    var selected = ViewBag.SelectedDifficulty as string;
-}
+@{ ViewData["Title"] = "Workout Plans"; }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold mb-0">Workout Plans</h2>
@@ -15,17 +11,49 @@
     }
 </div>
 
-<!-- Difficulty filter -->
+@* ── Filter bar ──────────────────────────────────────────────────────────── *@
+<form method="get" asp-action="Index" class="card border-0 shadow-sm mb-4 p-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label small fw-medium mb-1">Search</label>
+            <input type="text" name="search" value="@Model.Search"
+                   class="form-control form-control-sm" placeholder="Search plans…"/>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-medium mb-1">Difficulty</label>
+            <select name="difficulty" class="form-select form-select-sm">
+                <option value="">All levels</option>
+                @foreach (var d in new[] { "Beginner", "Intermediate", "Advanced" })
+                {
+                    <option value="@d" selected="@(Model.Difficulty == d ? "selected" : null)">@d</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Filter</button>
+            @if (Model.Search != null || Model.Difficulty != null)
+            {
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm">✕</a>
+            }
+        </div>
+    </div>
+</form>
+
+@* ── Difficulty pills (quick filter) ─────────────────────────────────────── *@
 <div class="mb-4 d-flex gap-2 flex-wrap">
-    <a asp-action="Index" class="btn btn-sm @(selected == null ? "btn-dark" : "btn-outline-dark")">All</a>
-    @foreach (var d in difficulties)
+    <a asp-action="Index" asp-route-search="@Model.Search"
+       class="btn btn-sm @(Model.Difficulty == null ? "btn-dark" : "btn-outline-dark")">All</a>
+    @foreach (var d in new[] { "Beginner", "Intermediate", "Advanced" })
     {
-        <a asp-action="Index" asp-route-difficulty="@d"
-           class="btn btn-sm @(selected == d ? "btn-dark" : "btn-outline-dark")">@d</a>
+        <a asp-action="Index" asp-route-search="@Model.Search" asp-route-difficulty="@d"
+           class="btn btn-sm @(Model.Difficulty == d ? "btn-dark" : "btn-outline-dark")">@d</a>
     }
+    <span class="ms-auto text-muted small align-self-center">
+        @Model.TotalCount plan@(Model.TotalCount != 1 ? "s" : "")
+    </span>
 </div>
 
-@if (!Model.Any())
+@if (!Model.Plans.Any())
 {
     <div class="text-center text-muted py-5">
         <p class="fs-5">No workout plans found.</p>
@@ -38,8 +66,9 @@
 else
 {
     <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
-        @foreach (var plan in Model)
+        @foreach (var plan in Model.Plans)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             <div class="col">
                 <div class="card h-100 shadow-sm border-0">
                     <div class="card-body">
@@ -54,9 +83,9 @@ else
                         <p class="card-text text-muted small mb-3">
                             @(plan.Description.Length > 100 ? plan.Description[..100] + "…" : plan.Description)
                         </p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted">by @plan.CreatorName</small>
-                            <small class="text-muted">@plan.WorkoutCount workout(s)</small>
+                        <div class="d-flex justify-content-between align-items-center text-muted small">
+                            <span>by @plan.CreatorName</span>
+                            <span>@plan.ExerciseCount exercise@(plan.ExerciseCount != 1 ? "s" : "")</span>
                         </div>
                     </div>
                     <div class="card-footer bg-transparent border-0 pt-0 pb-3 px-3">
@@ -67,14 +96,27 @@ else
             </div>
         }
     </div>
+
+    @await Html.PartialAsync("_Pagination", new PaginationViewModel
+    {
+        CurrentPage = Model.CurrentPage,
+        TotalPages  = Model.TotalPages,
+        Controller  = "WorkoutPlan",
+        Action      = "Index",
+        RouteValues = new Dictionary<string, string?>
+        {
+            ["search"]     = Model.Search,
+            ["difficulty"] = Model.Difficulty
+        }
+    })
 }
 
 @functions {
     static string DifficultyBadge(string d) => d switch
     {
-        "Beginner" => "bg-success",
+        "Beginner"     => "bg-success",
         "Intermediate" => "bg-warning text-dark",
-        "Advanced" => "bg-danger",
-        _ => "bg-secondary"
+        "Advanced"     => "bg-danger",
+        _              => "bg-secondary"
     };
 }

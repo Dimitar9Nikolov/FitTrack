@@ -53,6 +53,8 @@ public class WorkoutController : Controller
             .Include(w => w.WorkoutExercises)
                 .ThenInclude(we => we.Exercise)
                     .ThenInclude(e => e.Category)
+            .Include(w => w.WorkoutExercises)
+                .ThenInclude(we => we.ExerciseSets)
             .FirstOrDefaultAsync(w => w.Id == id && w.UserId == userId);
 
         if (workout == null) return NotFound();
@@ -74,9 +76,14 @@ public class WorkoutController : Controller
                 MuscleGroup = we.Exercise.MuscleGroup,
                 CategoryName = we.Exercise.Category.Name,
                 ExerciseType = we.Exercise.ExerciseType,
-                Sets = we.Sets,
-                Reps = we.Reps,
-                WeightKg = we.WeightKg,
+                Sets = we.ExerciseSets
+                    .OrderBy(s => s.SetNumber)
+                    .Select(s => new WorkoutSetViewModel
+                    {
+                        SetNumber = s.SetNumber,
+                        Reps = s.Reps,
+                        WeightKg = s.WeightKg
+                    }).ToList(),
                 CardioMinutes = we.CardioMinutes,
                 SpeedKmh = we.SpeedKmh,
                 Incline = we.Incline
@@ -141,21 +148,33 @@ public class WorkoutController : Controller
             foreach (var pe in planExercises)
             {
                 var isCardio = pe.Exercise.ExerciseType == "Cardio";
-                _context.WorkoutExercises.Add(new WorkoutExercise
+                var we = new WorkoutExercise
                 {
                     WorkoutId = workout.Id,
                     ExerciseId = pe.ExerciseId,
-                    Sets = isCardio ? 0 : pe.Sets,
-                    Reps = isCardio ? 0 : pe.Reps,
-                    WeightKg = 0,
                     CardioMinutes = isCardio ? 30 : null,
                     SpeedKmh = null,
                     Incline = null
-                });
+                };
+
+                if (!isCardio)
+                {
+                    for (int i = 1; i <= pe.Sets; i++)
+                    {
+                        we.ExerciseSets.Add(new WorkoutExerciseSet
+                        {
+                            SetNumber = i,
+                            Reps = pe.Reps,
+                            WeightKg = 0
+                        });
+                    }
+                }
+
+                _context.WorkoutExercises.Add(we);
             }
 
             await _context.SaveChangesAsync();
-            TempData["Success"] = $"Workout started with {planExercises.Count} exercises from your plan. Remove any you skipped, or adjust the details below.";
+            TempData["Success"] = $"Workout started with {planExercises.Count} exercises from your plan. Remove any you skipped, or update the weights below.";
         }
         else
         {
@@ -261,37 +280,53 @@ public class WorkoutController : Controller
         var workout = await _context.Workouts.FirstOrDefaultAsync(w => w.Id == vm.WorkoutId && w.UserId == userId);
         if (workout == null) return NotFound();
 
-        if (!ModelState.IsValid)
+        var exercise = await _context.Exercises.FindAsync(vm.ExerciseId);
+        if (exercise == null)
         {
-            TempData["Error"] = "Please fill in all exercise fields correctly.";
+            TempData["Error"] = "Please select an exercise.";
             return RedirectToAction(nameof(Details), new { id = vm.WorkoutId });
         }
 
-        var exercise = await _context.Exercises.FindAsync(vm.ExerciseId);
-        if (exercise == null) return NotFound();
-
         var isCardio = exercise.ExerciseType == "Cardio";
 
-        _context.WorkoutExercises.Add(new WorkoutExercise
+        var we = new WorkoutExercise
         {
             WorkoutId = vm.WorkoutId,
             ExerciseId = vm.ExerciseId,
-            Sets = isCardio ? 0 : vm.Sets,
-            Reps = isCardio ? 0 : vm.Reps,
-            WeightKg = isCardio ? 0 : vm.WeightKg,
             CardioMinutes = isCardio ? vm.CardioMinutes : null,
-            SpeedKmh = isCardio ? vm.SpeedKmh : null,
-            Incline = isCardio ? vm.Incline : null
-        });
+            SpeedKmh    = isCardio ? vm.SpeedKmh    : null,
+            Incline     = isCardio ? vm.Incline     : null
+        };
 
+        if (!isCardio)
+        {
+            var validSets = vm.SetData.Where(s => s.Reps > 0).ToList();
+            if (!validSets.Any())
+            {
+                TempData["Error"] = "Please add at least one set with reps > 0.";
+                return RedirectToAction(nameof(Details), new { id = vm.WorkoutId });
+            }
+
+            for (int i = 0; i < validSets.Count; i++)
+            {
+                we.ExerciseSets.Add(new WorkoutExerciseSet
+                {
+                    SetNumber = i + 1,
+                    Reps      = validSets[i].Reps,
+                    WeightKg  = validSets[i].WeightKg
+                });
+            }
+        }
+
+        _context.WorkoutExercises.Add(we);
         await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Details), new { id = vm.WorkoutId });
     }
 
-    // POST: /Workout/EditExercise
+    // POST: /Workout/EditExercise  (called from Stats inline form)
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditExercise(int id, int sets, int reps, decimal weightKg,
+    public async Task<IActionResult> EditExercise(int id, List<SetInputModel> sets,
         int? cardioMinutes, decimal? speedKmh, decimal? incline, string? returnUrl)
     {
         var userId = GetUserId();
@@ -299,6 +334,7 @@ public class WorkoutController : Controller
         var we = await _context.WorkoutExercises
             .Include(x => x.Workout)
             .Include(x => x.Exercise)
+            .Include(x => x.ExerciseSets)
             .FirstOrDefaultAsync(x => x.Id == id && x.Workout.UserId == userId);
 
         if (we == null) return NotFound();
@@ -306,14 +342,25 @@ public class WorkoutController : Controller
         if (we.Exercise.ExerciseType == "Cardio")
         {
             we.CardioMinutes = cardioMinutes;
-            we.SpeedKmh = speedKmh;
-            we.Incline = incline;
+            we.SpeedKmh      = speedKmh;
+            we.Incline       = incline;
         }
         else
         {
-            we.Sets = sets;
-            we.Reps = reps;
-            we.WeightKg = weightKg;
+            // Replace all sets with the submitted list
+            _context.WorkoutExerciseSets.RemoveRange(we.ExerciseSets);
+            we.ExerciseSets.Clear();
+
+            var validSets = sets?.Where(s => s.Reps > 0).ToList() ?? new List<SetInputModel>();
+            for (int i = 0; i < validSets.Count; i++)
+            {
+                we.ExerciseSets.Add(new WorkoutExerciseSet
+                {
+                    SetNumber = i + 1,
+                    Reps      = validSets[i].Reps,
+                    WeightKg  = validSets[i].WeightKg
+                });
+            }
         }
 
         await _context.SaveChangesAsync();
@@ -368,7 +415,7 @@ public class WorkoutController : Controller
             .SelectMany(g => g.Select(e => new SelectListItem
             {
                 Value = e.Id.ToString(),
-                Text = $"{e.Name} ({e.MuscleGroup})",
+                Text  = $"{e.Name} ({e.MuscleGroup})",
                 Group = new SelectListGroup { Name = g.Key }
             }));
     }

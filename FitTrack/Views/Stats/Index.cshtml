@@ -104,7 +104,7 @@
     </div>
 </div>
 
-<!-- Monthly breakdown table -->
+<!-- Monthly breakdown -->
 <div class="card border-0 shadow-sm mt-4">
     <div class="card-header bg-transparent fw-bold border-0 pt-3">Monthly Breakdown</div>
     <div class="card-body p-0">
@@ -123,18 +123,15 @@
                 <tr class="@(m.WorkoutCount == 0 ? "text-muted" : "")">
                     <td>@m.Month</td>
                     <td class="text-center">
-                        @if (m.WorkoutCount > 0)
-                        { <span class="badge bg-primary">@m.WorkoutCount</span> }
+                        @if (m.WorkoutCount > 0) { <span class="badge bg-primary">@m.WorkoutCount</span> }
                         else { <span>—</span> }
                     </td>
                     <td class="text-center">
-                        @if (m.TotalMinutes > 0)
-                        { @($"{m.TotalMinutes / 60}h {m.TotalMinutes % 60}m") }
+                        @if (m.TotalMinutes > 0) { @($"{m.TotalMinutes / 60}h {m.TotalMinutes % 60}m") }
                         else { <span>—</span> }
                     </td>
                     <td class="text-center">
-                        @if (m.WorkoutCount > 0)
-                        { @($"{m.TotalMinutes / m.WorkoutCount} min") }
+                        @if (m.WorkoutCount > 0) { @($"{m.TotalMinutes / m.WorkoutCount} min") }
                         else { <span>—</span> }
                     </td>
                 </tr>
@@ -144,7 +141,7 @@
     </div>
 </div>
 
-<!-- ── Workout Log ───────────────────────────────────────────────────────────── -->
+<!-- ── Workout Log ─────────────────────────────────────────────────────────── -->
 <div class="mt-4">
     <h4 class="fw-bold mb-3">Workout Log</h4>
 
@@ -162,24 +159,22 @@
                     <div class="fw-bold">@w.Date.ToString("dddd, dd MMM yyyy")</div>
                     <div class="text-muted small">@w.DurationMinutes min</div>
                     @if (w.WorkoutPlanTitle != null)
-                    {
-                        <span class="badge bg-primary">@w.WorkoutPlanTitle</span>
-                    }
+                    { <span class="badge bg-primary">@w.WorkoutPlanTitle</span> }
                     <div class="ms-auto d-flex gap-3 small">
                         @if (w.TotalVolume > 0)
                         {
                             <span class="text-success fw-medium">
-                                <i class="bi bi-lightning-fill"></i> Volume: @w.TotalVolume.ToString("F0") kg
+                                Volume: @w.TotalVolume.ToString("F0") kg
                             </span>
                         }
                         @if (w.TotalCardioMinutes > 0)
                         {
                             <span class="text-info fw-medium">
-                                <i class="bi bi-heart-pulse-fill"></i> Cardio: @w.TotalCardioMinutes min
+                                Cardio: @w.TotalCardioMinutes min
                             </span>
                         }
-                        <a asp-controller="Workout" asp-action="Details" asp-route-id="@w.WorkoutId"
-                           class="text-secondary">View</a>
+                        <a asp-controller="Workout" asp-action="Details"
+                           asp-route-id="@w.WorkoutId" class="text-secondary">View</a>
                     </div>
                 </div>
 
@@ -191,100 +186,154 @@
                             <tr>
                                 <th style="width:28%">Exercise</th>
                                 <th style="width:14%">Muscle</th>
-                                <th>Details</th>
-                                <th style="width:80px" class="text-end">Volume</th>
+                                <th>Sets / Details</th>
+                                <th style="width:90px" class="text-end">Volume</th>
                                 <th style="width:60px"></th>
                             </tr>
                             </thead>
                             <tbody>
                             @foreach (var ex in w.Exercises)
                             {
+                                var exVolume = ex.Sets.Sum(s => s.Reps * s.WeightKg);
                                 <!-- Display row -->
                                 <tr id="row-@ex.Id">
                                     <td class="fw-medium">
                                         @ex.ExerciseName
                                         @if (ex.ExerciseType == "Cardio")
-                                        { <span class="badge bg-info text-dark ms-1">Cardio</span> }
+                                        { <span class="badge bg-info text-dark ms-1 small">Cardio</span> }
                                     </td>
                                     <td><span class="badge bg-light text-dark border">@ex.MuscleGroup</span></td>
-                                    <td class="text-muted small">
+                                    <td>
                                         @if (ex.ExerciseType == "Cardio")
                                         {
-                                            @(ex.CardioMinutes.HasValue ? $"{ex.CardioMinutes} min" : "—")
-                                            @if (ex.SpeedKmh is > 0) { <text> · @ex.SpeedKmh km/h</text> }
-                                            @if (ex.Incline is > 0)  { <text> · @ex.Incline% incline</text> }
+                                            <span class="text-muted small">
+                                                @(ex.CardioMinutes.HasValue ? $"{ex.CardioMinutes} min" : "—")
+                                                @if (ex.SpeedKmh is > 0) { <text> · @ex.SpeedKmh km/h</text> }
+                                                @if (ex.Incline is > 0)  { <text> · @ex.Incline% incline</text> }
+                                            </span>
+                                        }
+                                        else if (ex.Sets.Any())
+                                        {
+                                            <div class="d-flex flex-wrap gap-1">
+                                                @foreach (var s in ex.Sets)
+                                                {
+                                                    <span class="badge bg-secondary small">
+                                                        @s.Reps reps@(s.WeightKg > 0 ? $" · {s.WeightKg}kg" : " BW")
+                                                    </span>
+                                                }
+                                            </div>
                                         }
                                         else
                                         {
-                                            @($"{ex.Sets} × {ex.Reps} reps")
-                                            @if (ex.WeightKg > 0) { <text> · @ex.WeightKg kg</text> }
-                                            else { <text> · BW</text> }
+                                            <span class="text-muted small">No sets logged</span>
                                         }
                                     </td>
                                     <td class="text-end small fw-medium">
-                                        @if (ex.ExerciseType != "Cardio" && ex.WeightKg > 0)
+                                        @if (ex.ExerciseType != "Cardio" && exVolume > 0)
                                         {
-                                            @((ex.Sets * ex.Reps * ex.WeightKg).ToString("F0"))
-                                            <span class="text-muted fw-normal">kg</span>
+                                            @exVolume.ToString("F0")
+                                            <span class="text-muted fw-normal"> kg</span>
                                         }
                                         else { <span class="text-muted">—</span> }
                                     </td>
                                     <td class="text-end">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2"
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-secondary py-0 px-2"
                                                 onclick="toggleEdit(@ex.Id)">Edit</button>
                                     </td>
                                 </tr>
-                                <!-- Inline edit row (hidden by default) -->
+
+                                <!-- Inline edit row -->
                                 <tr id="edit-@ex.Id" class="d-none table-warning">
                                     <td colspan="5" class="py-2 px-3">
-                                        <form asp-controller="Workout" asp-action="EditExercise" method="post"
-                                              class="row g-2 align-items-end">
+                                        <form asp-controller="Workout" asp-action="EditExercise" method="post">
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="id" value="@ex.Id"/>
                                             <input type="hidden" name="returnUrl" value="/Stats"/>
 
                                             @if (ex.ExerciseType == "Cardio")
                                             {
-                                                <div class="col-auto">
-                                                    <label class="form-label small mb-1">Duration (min)</label>
-                                                    <input type="number" name="cardioMinutes" value="@(ex.CardioMinutes ?? 30)"
-                                                           class="form-control form-control-sm" style="width:90px" min="1" max="600"/>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <label class="form-label small mb-1">Speed (km/h)</label>
-                                                    <input type="number" name="speedKmh" value="@(ex.SpeedKmh ?? 0)" step="0.5"
-                                                           class="form-control form-control-sm" style="width:90px" min="0" max="100"/>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <label class="form-label small mb-1">Incline (%)</label>
-                                                    <input type="number" name="incline" value="@(ex.Incline ?? 0)" step="0.5"
-                                                           class="form-control form-control-sm" style="width:80px" min="0" max="30"/>
+                                                <div class="d-flex flex-wrap gap-2 align-items-end">
+                                                    <div>
+                                                        <label class="form-label small mb-1">Duration (min)</label>
+                                                        <input type="number" name="cardioMinutes"
+                                                               value="@(ex.CardioMinutes ?? 30)"
+                                                               class="form-control form-control-sm" style="width:90px"
+                                                               min="1" max="600"/>
+                                                    </div>
+                                                    <div>
+                                                        <label class="form-label small mb-1">Speed (km/h)</label>
+                                                        <input type="number" name="speedKmh"
+                                                               value="@(ex.SpeedKmh ?? 0)" step="0.5"
+                                                               class="form-control form-control-sm" style="width:90px"
+                                                               min="0" max="100"/>
+                                                    </div>
+                                                    <div>
+                                                        <label class="form-label small mb-1">Incline (%)</label>
+                                                        <input type="number" name="incline"
+                                                               value="@(ex.Incline ?? 0)" step="0.5"
+                                                               class="form-control form-control-sm" style="width:80px"
+                                                               min="0" max="30"/>
+                                                    </div>
+                                                    <div class="d-flex gap-2">
+                                                        <button type="submit" class="btn btn-sm btn-success">Save</button>
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                                onclick="toggleEdit(@ex.Id)">Cancel</button>
+                                                    </div>
                                                 </div>
                                             }
                                             else
                                             {
-                                                <div class="col-auto">
-                                                    <label class="form-label small mb-1">Sets</label>
-                                                    <input type="number" name="sets" value="@ex.Sets"
-                                                           class="form-control form-control-sm" style="width:75px" min="1" max="100"/>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <label class="form-label small mb-1">Reps</label>
-                                                    <input type="number" name="reps" value="@ex.Reps"
-                                                           class="form-control form-control-sm" style="width:80px" min="1" max="1000"/>
-                                                </div>
-                                                <div class="col-auto">
-                                                    <label class="form-label small mb-1">Weight (kg)</label>
-                                                    <input type="number" name="weightKg" value="@ex.WeightKg" step="0.5"
-                                                           class="form-control form-control-sm" style="width:90px" min="0" max="1000"/>
+                                                <!-- Per-set edit table -->
+                                                <table class="table table-sm mb-2" style="max-width:380px"
+                                                       id="editSetsTable-@ex.Id">
+                                                    <thead>
+                                                    <tr class="text-muted small">
+                                                        <th style="width:28px">#</th>
+                                                        <th>Reps</th>
+                                                        <th>kg</th>
+                                                        <th style="width:28px"></th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody id="editSetsBody-@ex.Id">
+                                                    @for (int si = 0; si < ex.Sets.Count; si++)
+                                                    {
+                                                        var s = ex.Sets[si];
+                                                        <tr class="edit-set-row" data-exercise="@ex.Id">
+                                                            <td class="text-muted small align-middle">
+                                                                <span class="edit-set-number">@(si + 1)</span>
+                                                            </td>
+                                                            <td>
+                                                                <input type="number"
+                                                                       name="sets[@si].Reps"
+                                                                       value="@s.Reps"
+                                                                       class="form-control form-control-sm"
+                                                                       style="width:70px" min="1" max="1000"/>
+                                                            </td>
+                                                            <td>
+                                                                <input type="number"
+                                                                       name="sets[@si].WeightKg"
+                                                                       value="@s.WeightKg" step="0.5"
+                                                                       class="form-control form-control-sm"
+                                                                       style="width:80px" min="0" max="1000"/>
+                                                            </td>
+                                                            <td>
+                                                                <button type="button"
+                                                                        class="btn btn-sm btn-outline-danger py-0 px-1"
+                                                                        onclick="removeEditSet(this, @ex.Id)">✕</button>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                    </tbody>
+                                                </table>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn btn-sm btn-outline-success"
+                                                            onclick="addEditSet(@ex.Id)">+ Set</button>
+                                                    <button type="submit" class="btn btn-sm btn-success">Save</button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                            onclick="toggleEdit(@ex.Id)">Cancel</button>
                                                 </div>
                                             }
-
-                                            <div class="col-auto d-flex gap-2">
-                                                <button type="submit" class="btn btn-sm btn-success">Save</button>
-                                                <button type="button" class="btn btn-sm btn-outline-secondary"
-                                                        onclick="toggleEdit(@ex.Id)">Cancel</button>
-                                            </div>
                                         </form>
                                     </td>
                                 </tr>
@@ -323,16 +372,46 @@
             options: {
                 responsive: true,
                 plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }
-                }
+                scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } }
             }
         });
 
-        // Toggle inline edit rows
+        // Toggle inline edit row
         function toggleEdit(id) {
-            const editRow = document.getElementById('edit-' + id);
-            editRow.classList.toggle('d-none');
+            document.getElementById('edit-' + id).classList.toggle('d-none');
+        }
+
+        // Add set row to edit form
+        function addEditSet(exId) {
+            const tbody = document.getElementById('editSetsBody-' + exId);
+            const idx   = tbody.querySelectorAll('.edit-set-row').length;
+            const tr    = document.createElement('tr');
+            tr.className = 'edit-set-row';
+            tr.dataset.exercise = exId;
+            tr.innerHTML = `
+                <td class="text-muted small align-middle"><span class="edit-set-number">${idx + 1}</span></td>
+                <td><input type="number" name="sets[${idx}].Reps" value="10"
+                           class="form-control form-control-sm" style="width:70px" min="1" max="1000"></td>
+                <td><input type="number" name="sets[${idx}].WeightKg" value="0" step="0.5"
+                           class="form-control form-control-sm" style="width:80px" min="0" max="1000"></td>
+                <td><button type="button" class="btn btn-sm btn-outline-danger py-0 px-1"
+                            onclick="removeEditSet(this, ${exId})">✕</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function removeEditSet(btn, exId) {
+            btn.closest('.edit-set-row').remove();
+            renumberEditSets(exId);
+        }
+
+        function renumberEditSets(exId) {
+            const rows = document.querySelectorAll(`#editSetsBody-${exId} .edit-set-row`);
+            rows.forEach((row, idx) => {
+                row.querySelector('.edit-set-number').textContent = idx + 1;
+                row.querySelector('input[name$=".Reps"]').name    = `sets[${idx}].Reps`;
+                row.querySelector('input[name$=".WeightKg"]').name = `sets[${idx}].WeightKg`;
+            });
         }
     </script>
 }
