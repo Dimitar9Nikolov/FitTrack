@@ -1,8 +1,131 @@
-﻿@{ 
-    ViewData["Title"] = "Home Page";
+@using FitTrack.ViewModels.Home
+@{
+    ViewData["Title"] = User.Identity!.IsAuthenticated ? "Dashboard" : "Welcome";
+    var vm = Model as DashboardViewModel;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@if (!User.Identity.IsAuthenticated)
+{
+    <!-- ── Landing page for guests ── -->
+    <div class="py-5 text-center">
+        <h1 class="display-4 fw-bold">Track Every Rep. <span class="text-primary">Crush Every Goal.</span></h1>
+        <p class="lead text-muted mt-3 mb-4">
+            FitTrack helps you log workouts, follow community plans, and monitor your progress over time.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-primary btn-lg">Get Started Free</a>
+            <a asp-controller="WorkoutPlan" asp-action="Index" class="btn btn-outline-secondary btn-lg">Browse Plans</a>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-3">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 text-center p-4">
+                <div class="fs-1 mb-2">🏋️</div>
+                <h5 class="fw-bold">Log Workouts</h5>
+                <p class="text-muted">Track every session with exercises, sets, reps and weight.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 text-center p-4">
+                <div class="fs-1 mb-2">📋</div>
+                <h5 class="fw-bold">Follow Plans</h5>
+                <p class="text-muted">Browse community workout plans or create your own.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100 text-center p-4">
+                <div class="fs-1 mb-2">📊</div>
+                <h5 class="fw-bold">Track Progress</h5>
+                <p class="text-muted">See your stats, favourite muscles and monthly trends.</p>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <!-- ── Dashboard for logged-in users ── -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">Welcome back, @(vm!.DisplayName) 👋</h2>
+            <p class="text-muted mb-0">Here's your fitness summary.</p>
+        </div>
+        <a asp-controller="Workout" asp-action="Create" class="btn btn-primary">+ Log Workout</a>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="fs-2 fw-bold text-primary">@vm.TotalWorkouts</div>
+                <div class="text-muted small">Total Workouts</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="fs-2 fw-bold text-success">@vm.TotalExercisesLogged</div>
+                <div class="text-muted small">Exercises Logged</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="fs-2 fw-bold text-info">@vm.WorkoutsThisWeek</div>
+                <div class="text-muted small">This Week</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <div class="fs-2 fw-bold text-warning">@(vm.TotalDurationMinutes / 60)h @(vm.TotalDurationMinutes % 60)m</div>
+                <div class="text-muted small">Total Time</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent workouts -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Recent Workouts</h5>
+        <a asp-controller="Workout" asp-action="Index" class="small">View all →</a>
+    </div>
+
+    @if (!vm.RecentWorkouts.Any())
+    {
+        <div class="alert alert-light border text-center">
+            No workouts yet. <a asp-controller="Workout" asp-action="Create">Log your first one!</a>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Duration</th>
+                        <th>Exercises</th>
+                        <th>Plan</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var w in vm.RecentWorkouts)
+                    {
+                        <tr>
+                            <td class="fw-medium">@w.Date.ToString("dd MMM yyyy")</td>
+                            <td>@w.DurationMinutes min</td>
+                            <td><span class="badge bg-secondary">@w.ExerciseCount</span></td>
+                            <td class="text-muted small">@(w.WorkoutPlanTitle ?? "—")</td>
+                            <td><a asp-controller="Workout" asp-action="Details" asp-route-id="@w.Id" class="btn btn-sm btn-outline-primary">View</a></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <div class="d-flex gap-2">
+        <a asp-controller="Stats" asp-action="Index" class="btn btn-outline-primary">View Full Stats</a>
+        <a asp-controller="WorkoutPlan" asp-action="Index" class="btn btn-outline-secondary">Browse Plans</a>
+    </div>
+}

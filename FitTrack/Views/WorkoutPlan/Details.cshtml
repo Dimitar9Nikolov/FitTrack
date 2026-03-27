@@ -1,4 +1,5 @@
 @model FitTrack.ViewModels.WorkoutPlan.WorkoutPlanDetailsViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
 @{
     ViewData["Title"] = Model.Title;
 }
@@ -17,9 +18,12 @@
 </div>
 
 <div class="row g-4">
-    <!-- Plan info -->
+
+    <!-- Left: plan info + exercise list -->
     <div class="col-lg-8">
-        <div class="card shadow-sm border-0">
+
+        <!-- Plan info card -->
+        <div class="card border-0 shadow-sm mb-4">
             <div class="card-body p-4">
                 <div class="d-flex gap-2 mb-3">
                     <span class="badge fs-6 @DifficultyBadge(Model.Difficulty)">@Model.Difficulty</span>
@@ -32,44 +36,137 @@
                         <span class="badge bg-light text-dark border fs-6">Public</span>
                     }
                 </div>
-
-                <p class="lead">@Model.Description</p>
-
-                <hr/>
-
-                <dl class="row mb-0">
+                <p class="lead mb-3">@Model.Description</p>
+                <dl class="row mb-0 small text-muted">
                     <dt class="col-sm-3">Created by</dt>
                     <dd class="col-sm-9">@Model.CreatorName</dd>
                     <dt class="col-sm-3">Workouts logged</dt>
                     <dd class="col-sm-9">@Model.WorkoutCount</dd>
+                    <dt class="col-sm-3">Exercises</dt>
+                    <dd class="col-sm-9">@Model.PlanExercises.Count prescribed movements</dd>
                 </dl>
             </div>
         </div>
+
+        <!-- Exercise preview -->
+        <h5 class="fw-bold mb-3">Exercise Preview</h5>
+
+        @if (!Model.PlanExercises.Any())
+        {
+            <div class="alert alert-light border text-muted">No exercises added to this plan yet.</div>
+        }
+        else
+        {
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Exercise</th>
+                            <th>Muscle</th>
+                            <th class="text-center">Sets</th>
+                            <th class="text-center">Reps</th>
+                            <th>Notes</th>
+                            @if (Model.IsOwner)
+                            {
+                                <th></th>
+                            }
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var ex in Model.PlanExercises)
+                        {
+                            <tr>
+                                <td class="text-muted">@ex.OrderIndex</td>
+                                <td class="fw-medium">@ex.ExerciseName</td>
+                                <td><span class="badge bg-light text-dark border">@ex.MuscleGroup</span></td>
+                                <td class="text-center">@ex.Sets</td>
+                                <td class="text-center">@ex.Reps</td>
+                                <td class="text-muted small">@(ex.Notes ?? "—")</td>
+                                @if (Model.IsOwner)
+                                {
+                                    <td class="text-end">
+                                        <form asp-action="RemovePlanExercise" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@ex.Id"/>
+                                            <input type="hidden" name="planId" value="@Model.Id"/>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('Remove this exercise from the plan?')">✕</button>
+                                        </form>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- Add exercise form (owner only) -->
+        @if (Model.IsOwner)
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent fw-bold border-0 pt-3">Add Exercise to Plan</div>
+                <div class="card-body">
+                    <form asp-action="AddPlanExercise" method="post" class="row g-2 align-items-end">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="planId" value="@Model.Id"/>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-medium">Exercise</label>
+                            <select name="exerciseId" class="form-select form-select-sm" required>
+                                <option value="">— select —</option>
+                                @foreach (var item in ViewBag.ExerciseList as IEnumerable<SelectListItem> ?? new List<SelectListItem>())
+                                {
+                                    <option value="@item.Value" data-group="@item.Group?.Name">@item.Text</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label small fw-medium">Sets</label>
+                            <input type="number" name="sets" class="form-control form-control-sm" value="3" min="1" max="100"/>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label small fw-medium">Reps</label>
+                            <input type="number" name="reps" class="form-control form-control-sm" value="10" min="1" max="1000"/>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-medium">Notes (optional)</label>
+                            <input type="text" name="notes" class="form-control form-control-sm" maxlength="200"/>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary btn-sm w-100">+ Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
     </div>
 
-    <!-- Actions -->
+    <!-- Right: action panel -->
     <div class="col-lg-4">
-        <div class="card shadow-sm border-0">
+        <div class="card border-0 shadow-sm sticky-top" style="top:1rem;">
             <div class="card-body p-4 d-grid gap-2">
                 @if (User.Identity!.IsAuthenticated)
                 {
                     <a asp-controller="Workout" asp-action="Create"
                        asp-route-planId="@Model.Id"
-                       class="btn btn-primary">Start a Workout</a>
+                       class="btn btn-primary btn-lg">Start a Workout</a>
                 }
                 else
                 {
-                    <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary">
-                        Log in to start a workout
+                    <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary btn-lg">
+                        Log in to start
                     </a>
                 }
 
                 @if (Model.IsOwner)
                 {
-                    <a asp-action="Edit" asp-route-id="@Model.Id"
-                       class="btn btn-outline-primary">Edit Plan</a>
-                    <a asp-action="Delete" asp-route-id="@Model.Id"
-                       class="btn btn-outline-danger">Delete Plan</a>
+                    <hr class="my-1"/>
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit Plan</a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Delete Plan</a>
                 }
             </div>
         </div>
@@ -79,9 +176,9 @@
 @functions {
     static string DifficultyBadge(string d) => d switch
     {
-        "Beginner" => "bg-success",
+        "Beginner"     => "bg-success",
         "Intermediate" => "bg-warning text-dark",
-        "Advanced" => "bg-danger",
+        "Advanced"     => "bg-danger",
         _ => "bg-secondary"
     };
 }

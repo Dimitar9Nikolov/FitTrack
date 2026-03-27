@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FitTrack.Data;
 using FitTrack.Models;
@@ -57,6 +58,9 @@ public class WorkoutPlanController : Controller
         var plan = await _context.WorkoutPlans
             .Include(wp => wp.Creator)
             .Include(wp => wp.Workouts)
+            .Include(wp => wp.PlanExercises.OrderBy(pe => pe.OrderIndex))
+                .ThenInclude(pe => pe.Exercise)
+                    .ThenInclude(e => e.Category)
             .FirstOrDefaultAsync(wp => wp.Id == id);
 
         if (plan == null) return NotFound();
@@ -75,10 +79,69 @@ public class WorkoutPlanController : Controller
             CreatorId = plan.CreatorId,
             CreatorName = plan.Creator.DisplayName,
             WorkoutCount = plan.Workouts.Count,
-            IsOwner = plan.CreatorId == userId
+            IsOwner = plan.CreatorId == userId,
+            PlanExercises = plan.PlanExercises.Select(pe => new PlanExerciseViewModel
+            {
+                Id = pe.Id,
+                ExerciseName = pe.Exercise.Name,
+                MuscleGroup = pe.Exercise.MuscleGroup,
+                CategoryName = pe.Exercise.Category.Name,
+                Sets = pe.Sets,
+                Reps = pe.Reps,
+                Notes = pe.Notes,
+                OrderIndex = pe.OrderIndex
+            }).ToList()
         };
 
+        ViewBag.ExerciseList = await GetExerciseSelectListAsync();
         return View(vm);
+    }
+
+    // POST: /WorkoutPlan/AddPlanExercise
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddPlanExercise(int planId, int exerciseId, int sets, int reps, string? notes)
+    {
+        var plan = await _context.WorkoutPlans.FindAsync(planId);
+        if (plan == null) return NotFound();
+        if (!IsOwnerOrAdmin(plan.CreatorId)) return Forbid();
+
+        var nextOrder = await _context.WorkoutPlanExercises
+            .Where(pe => pe.WorkoutPlanId == planId)
+            .Select(pe => (int?)pe.OrderIndex)
+            .MaxAsync() ?? 0;
+
+        _context.WorkoutPlanExercises.Add(new WorkoutPlanExercise
+        {
+            WorkoutPlanId = planId,
+            ExerciseId = exerciseId,
+            Sets = sets,
+            Reps = reps,
+            Notes = string.IsNullOrWhiteSpace(notes) ? null : notes,
+            OrderIndex = nextOrder + 1
+        });
+
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Details), new { id = planId });
+    }
+
+    // POST: /WorkoutPlan/RemovePlanExercise
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemovePlanExercise(int id, int planId)
+    {
+        var pe = await _context.WorkoutPlanExercises
+            .Include(x => x.WorkoutPlan)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (pe == null) return NotFound();
+        if (!IsOwnerOrAdmin(pe.WorkoutPlan.CreatorId)) return Forbid();
+
+        _context.WorkoutPlanExercises.Remove(pe);
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Details), new { id = planId });
     }
 
     // GET: /WorkoutPlan/Create
@@ -196,5 +259,23 @@ public class WorkoutPlanController : Controller
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         return userId == ownerId || User.IsInRole("Admin");
+    }
+
+    private async Task<IEnumerable<SelectListItem>> GetExerciseSelectListAsync()
+    {
+        var exercises = await _context.Exercises
+            .Include(e => e.Category)
+            .OrderBy(e => e.Category.Name)
+            .ThenBy(e => e.Name)
+            .ToListAsync();
+
+        return exercises
+            .GroupBy(e => e.Category.Name)
+            .SelectMany(g => g.Select(e => new SelectListItem
+            {
+                Value = e.Id.ToString(),
+                Text = $"{e.Name} ({e.MuscleGroup})",
+                Group = new SelectListGroup { Name = g.Key }
+            }));
     }
 }

@@ -27,4 +27,5 @@ public class WorkoutPlan
     public ApplicationUser Creator { get; set; } = null!;
 
     public ICollection<Workout> Workouts { get; set; } = new List<Workout>();
+    public ICollection<WorkoutPlanExercise> PlanExercises { get; set; } = new List<WorkoutPlanExercise>();
 }

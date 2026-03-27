@@ -27,4 +27,5 @@ public class Exercise
     public Category Category { get; set; } = null!;
 
     public ICollection<WorkoutExercise> WorkoutExercises { get; set; } = new List<WorkoutExercise>();
+    public ICollection<WorkoutPlanExercise> WorkoutPlanExercises { get; set; } = new List<WorkoutPlanExercise>();
 }
