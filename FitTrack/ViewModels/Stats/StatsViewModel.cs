@@ -13,6 +13,7 @@ public class StatsViewModel
 
     public List<MonthlyWorkoutData> MonthlyData { get; set; } = new();
     public List<ExerciseVolumeData> TopExercises { get; set; } = new();
+    public List<DailyWorkoutSummary> WorkoutLog { get; set; } = new();
 }
 
 public class MonthlyWorkoutData
@@ -28,4 +29,31 @@ public class ExerciseVolumeData
     public string MuscleGroup { get; set; } = string.Empty;
     public int TimesLogged { get; set; }
     public decimal TotalVolume { get; set; }             // sets × reps × weight
+}
+
+public class DailyWorkoutSummary
+{
+    public int WorkoutId { get; set; }
+    public DateTime Date { get; set; }
+    public int DurationMinutes { get; set; }
+    public string? WorkoutPlanTitle { get; set; }
+    public decimal TotalVolume { get; set; }             // sum of sets × reps × weight
+    public int TotalCardioMinutes { get; set; }
+    public List<WorkoutExerciseLogItem> Exercises { get; set; } = new();
+}
+
+public class WorkoutExerciseLogItem
+{
+    public int Id { get; set; }
+    public string ExerciseName { get; set; } = string.Empty;
+    public string MuscleGroup { get; set; } = string.Empty;
+    public string ExerciseType { get; set; } = "Strength";
+    // Strength
+    public int Sets { get; set; }
+    public int Reps { get; set; }
+    public decimal WeightKg { get; set; }
+    // Cardio
+    public int? CardioMinutes { get; set; }
+    public decimal? SpeedKmh { get; set; }
+    public decimal? Incline { get; set; }
 }

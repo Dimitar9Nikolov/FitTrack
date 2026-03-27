@@ -1,6 +1,13 @@
 @model FitTrack.ViewModels.Stats.StatsViewModel
 @{ ViewData["Title"] = "My Stats"; }
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["Success"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold mb-0">My Stats</h2>
     <a asp-controller="Workout" asp-action="Create" class="btn btn-primary">+ Log Workout</a>
@@ -86,7 +93,7 @@
                                 <td class="fw-medium">@ex.ExerciseName</td>
                                 <td><span class="badge bg-light text-dark border">@ex.MuscleGroup</span></td>
                                 <td class="text-center">@ex.TimesLogged</td>
-                                <td class="text-end">@(ex.TotalVolume > 0 ? $"{ex.TotalVolume:F0}" : "BW")</td>
+                                <td class="text-end">@(ex.TotalVolume > 0 ? $"{ex.TotalVolume:F0} kg" : "BW")</td>
                             </tr>
                         }
                         </tbody>
@@ -117,9 +124,7 @@
                     <td>@m.Month</td>
                     <td class="text-center">
                         @if (m.WorkoutCount > 0)
-                        {
-                            <span class="badge bg-primary">@m.WorkoutCount</span>
-                        }
+                        { <span class="badge bg-primary">@m.WorkoutCount</span> }
                         else { <span>—</span> }
                     </td>
                     <td class="text-center">
@@ -139,9 +144,168 @@
     </div>
 </div>
 
+<!-- ── Workout Log ───────────────────────────────────────────────────────────── -->
+<div class="mt-4">
+    <h4 class="fw-bold mb-3">Workout Log</h4>
+
+    @if (!Model.WorkoutLog.Any())
+    {
+        <div class="alert alert-info">No workouts logged yet.</div>
+    }
+    else
+    {
+        @foreach (var w in Model.WorkoutLog)
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <!-- Workout header -->
+                <div class="card-header bg-light d-flex flex-wrap align-items-center gap-3 py-2">
+                    <div class="fw-bold">@w.Date.ToString("dddd, dd MMM yyyy")</div>
+                    <div class="text-muted small">@w.DurationMinutes min</div>
+                    @if (w.WorkoutPlanTitle != null)
+                    {
+                        <span class="badge bg-primary">@w.WorkoutPlanTitle</span>
+                    }
+                    <div class="ms-auto d-flex gap-3 small">
+                        @if (w.TotalVolume > 0)
+                        {
+                            <span class="text-success fw-medium">
+                                <i class="bi bi-lightning-fill"></i> Volume: @w.TotalVolume.ToString("F0") kg
+                            </span>
+                        }
+                        @if (w.TotalCardioMinutes > 0)
+                        {
+                            <span class="text-info fw-medium">
+                                <i class="bi bi-heart-pulse-fill"></i> Cardio: @w.TotalCardioMinutes min
+                            </span>
+                        }
+                        <a asp-controller="Workout" asp-action="Details" asp-route-id="@w.WorkoutId"
+                           class="text-secondary">View</a>
+                    </div>
+                </div>
+
+                @if (w.Exercises.Any())
+                {
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-hover mb-0 align-middle">
+                            <thead class="table-light">
+                            <tr>
+                                <th style="width:28%">Exercise</th>
+                                <th style="width:14%">Muscle</th>
+                                <th>Details</th>
+                                <th style="width:80px" class="text-end">Volume</th>
+                                <th style="width:60px"></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var ex in w.Exercises)
+                            {
+                                <!-- Display row -->
+                                <tr id="row-@ex.Id">
+                                    <td class="fw-medium">
+                                        @ex.ExerciseName
+                                        @if (ex.ExerciseType == "Cardio")
+                                        { <span class="badge bg-info text-dark ms-1">Cardio</span> }
+                                    </td>
+                                    <td><span class="badge bg-light text-dark border">@ex.MuscleGroup</span></td>
+                                    <td class="text-muted small">
+                                        @if (ex.ExerciseType == "Cardio")
+                                        {
+                                            @(ex.CardioMinutes.HasValue ? $"{ex.CardioMinutes} min" : "—")
+                                            @if (ex.SpeedKmh is > 0) { <text> · @ex.SpeedKmh km/h</text> }
+                                            @if (ex.Incline is > 0)  { <text> · @ex.Incline% incline</text> }
+                                        }
+                                        else
+                                        {
+                                            @($"{ex.Sets} × {ex.Reps} reps")
+                                            @if (ex.WeightKg > 0) { <text> · @ex.WeightKg kg</text> }
+                                            else { <text> · BW</text> }
+                                        }
+                                    </td>
+                                    <td class="text-end small fw-medium">
+                                        @if (ex.ExerciseType != "Cardio" && ex.WeightKg > 0)
+                                        {
+                                            @((ex.Sets * ex.Reps * ex.WeightKg).ToString("F0"))
+                                            <span class="text-muted fw-normal">kg</span>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2"
+                                                onclick="toggleEdit(@ex.Id)">Edit</button>
+                                    </td>
+                                </tr>
+                                <!-- Inline edit row (hidden by default) -->
+                                <tr id="edit-@ex.Id" class="d-none table-warning">
+                                    <td colspan="5" class="py-2 px-3">
+                                        <form asp-controller="Workout" asp-action="EditExercise" method="post"
+                                              class="row g-2 align-items-end">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@ex.Id"/>
+                                            <input type="hidden" name="returnUrl" value="/Stats"/>
+
+                                            @if (ex.ExerciseType == "Cardio")
+                                            {
+                                                <div class="col-auto">
+                                                    <label class="form-label small mb-1">Duration (min)</label>
+                                                    <input type="number" name="cardioMinutes" value="@(ex.CardioMinutes ?? 30)"
+                                                           class="form-control form-control-sm" style="width:90px" min="1" max="600"/>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <label class="form-label small mb-1">Speed (km/h)</label>
+                                                    <input type="number" name="speedKmh" value="@(ex.SpeedKmh ?? 0)" step="0.5"
+                                                           class="form-control form-control-sm" style="width:90px" min="0" max="100"/>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <label class="form-label small mb-1">Incline (%)</label>
+                                                    <input type="number" name="incline" value="@(ex.Incline ?? 0)" step="0.5"
+                                                           class="form-control form-control-sm" style="width:80px" min="0" max="30"/>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="col-auto">
+                                                    <label class="form-label small mb-1">Sets</label>
+                                                    <input type="number" name="sets" value="@ex.Sets"
+                                                           class="form-control form-control-sm" style="width:75px" min="1" max="100"/>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <label class="form-label small mb-1">Reps</label>
+                                                    <input type="number" name="reps" value="@ex.Reps"
+                                                           class="form-control form-control-sm" style="width:80px" min="1" max="1000"/>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <label class="form-label small mb-1">Weight (kg)</label>
+                                                    <input type="number" name="weightKg" value="@ex.WeightKg" step="0.5"
+                                                           class="form-control form-control-sm" style="width:90px" min="0" max="1000"/>
+                                                </div>
+                                            }
+
+                                            <div class="col-auto d-flex gap-2">
+                                                <button type="submit" class="btn btn-sm btn-success">Save</button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                        onclick="toggleEdit(@ex.Id)">Cancel</button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="card-body text-muted small py-2">No exercises recorded.</div>
+                }
+            </div>
+        }
+    }
+</div>
+
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // Monthly chart
         const ctx = document.getElementById('monthlyChart');
         new Chart(ctx, {
             type: 'bar',
@@ -160,12 +324,15 @@
                 responsive: true,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { stepSize: 1, precision: 0 }
-                    }
+                    y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }
                 }
             }
         });
+
+        // Toggle inline edit rows
+        function toggleEdit(id) {
+            const editRow = document.getElementById('edit-' + id);
+            editRow.classList.toggle('d-none');
+        }
     </script>
 }

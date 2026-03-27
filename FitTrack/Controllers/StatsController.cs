@@ -101,6 +101,42 @@ public class StatsController : Controller
             .Take(5)
             .ToListAsync();
 
+        // ── Detailed workout log ───────────────────────────────────────────────
+        var rawWorkouts = await _context.Workouts
+            .Where(w => w.UserId == userId)
+            .Include(w => w.WorkoutPlan)
+            .Include(w => w.WorkoutExercises)
+                .ThenInclude(we => we.Exercise)
+            .OrderByDescending(w => w.Date)
+            .ToListAsync();
+
+        var workoutLog = rawWorkouts.Select(w => new DailyWorkoutSummary
+        {
+            WorkoutId = w.Id,
+            Date = w.Date,
+            DurationMinutes = w.DurationMinutes,
+            WorkoutPlanTitle = w.WorkoutPlan?.Title,
+            TotalVolume = w.WorkoutExercises
+                .Where(we => we.Exercise.ExerciseType != "Cardio")
+                .Sum(we => we.Sets * we.Reps * we.WeightKg),
+            TotalCardioMinutes = w.WorkoutExercises
+                .Where(we => we.Exercise.ExerciseType == "Cardio")
+                .Sum(we => we.CardioMinutes ?? 0),
+            Exercises = w.WorkoutExercises.Select(we => new WorkoutExerciseLogItem
+            {
+                Id = we.Id,
+                ExerciseName = we.Exercise.Name,
+                MuscleGroup = we.Exercise.MuscleGroup,
+                ExerciseType = we.Exercise.ExerciseType,
+                Sets = we.Sets,
+                Reps = we.Reps,
+                WeightKg = we.WeightKg,
+                CardioMinutes = we.CardioMinutes,
+                SpeedKmh = we.SpeedKmh,
+                Incline = we.Incline
+            }).ToList()
+        }).ToList();
+
         var vm = new StatsViewModel
         {
             TotalWorkouts = totalWorkouts,
@@ -111,7 +147,8 @@ public class StatsController : Controller
             FavoriteMuscleGroup = favMuscle,
             FavoriteExercise = favExercise,
             MonthlyData = monthlyData,
-            TopExercises = topExercises
+            TopExercises = topExercises,
+            WorkoutLog = workoutLog
         };
 
         return View(vm);

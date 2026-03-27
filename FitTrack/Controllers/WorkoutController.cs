@@ -129,7 +129,39 @@ public class WorkoutController : Controller
         _context.Workouts.Add(workout);
         await _context.SaveChangesAsync();
 
-        TempData["Success"] = "Workout created! Now add your exercises below.";
+        // Auto-populate exercises from the selected plan
+        if (vm.WorkoutPlanId.HasValue)
+        {
+            var planExercises = await _context.WorkoutPlanExercises
+                .Where(wpe => wpe.WorkoutPlanId == vm.WorkoutPlanId.Value)
+                .Include(wpe => wpe.Exercise)
+                .OrderBy(wpe => wpe.OrderIndex)
+                .ToListAsync();
+
+            foreach (var pe in planExercises)
+            {
+                var isCardio = pe.Exercise.ExerciseType == "Cardio";
+                _context.WorkoutExercises.Add(new WorkoutExercise
+                {
+                    WorkoutId = workout.Id,
+                    ExerciseId = pe.ExerciseId,
+                    Sets = isCardio ? 0 : pe.Sets,
+                    Reps = isCardio ? 0 : pe.Reps,
+                    WeightKg = 0,
+                    CardioMinutes = isCardio ? 30 : null,
+                    SpeedKmh = null,
+                    Incline = null
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = $"Workout started with {planExercises.Count} exercises from your plan. Remove any you skipped, or adjust the details below.";
+        }
+        else
+        {
+            TempData["Success"] = "Workout created! Now add your exercises below.";
+        }
+
         return RedirectToAction(nameof(Details), new { id = workout.Id });
     }
 
@@ -223,7 +255,7 @@ public class WorkoutController : Controller
     // POST: /Workout/AddExercise
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddExercise(WorkoutExerciseFormViewModel vm)
+    public async Task<IActionResult> AddExercise([Bind(Prefix = "AddExerciseForm")] WorkoutExerciseFormViewModel vm)
     {
         var userId = GetUserId();
         var workout = await _context.Workouts.FirstOrDefaultAsync(w => w.Id == vm.WorkoutId && w.UserId == userId);
@@ -254,6 +286,43 @@ public class WorkoutController : Controller
 
         await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Details), new { id = vm.WorkoutId });
+    }
+
+    // POST: /Workout/EditExercise
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditExercise(int id, int sets, int reps, decimal weightKg,
+        int? cardioMinutes, decimal? speedKmh, decimal? incline, string? returnUrl)
+    {
+        var userId = GetUserId();
+
+        var we = await _context.WorkoutExercises
+            .Include(x => x.Workout)
+            .Include(x => x.Exercise)
+            .FirstOrDefaultAsync(x => x.Id == id && x.Workout.UserId == userId);
+
+        if (we == null) return NotFound();
+
+        if (we.Exercise.ExerciseType == "Cardio")
+        {
+            we.CardioMinutes = cardioMinutes;
+            we.SpeedKmh = speedKmh;
+            we.Incline = incline;
+        }
+        else
+        {
+            we.Sets = sets;
+            we.Reps = reps;
+            we.WeightKg = weightKg;
+        }
+
+        await _context.SaveChangesAsync();
+        TempData["Success"] = "Exercise updated.";
+
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            return Redirect(returnUrl);
+
+        return RedirectToAction(nameof(Details), new { id = we.WorkoutId });
     }
 
     // POST: /Workout/RemoveExercise
