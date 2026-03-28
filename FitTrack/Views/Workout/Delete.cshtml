@@ -1,5 +1,7 @@
 @model FitTrack.ViewModels.Workout.WorkoutListItemViewModel
-@{ ViewData["Title"] = "Delete Workout"; }
+@{
+    ViewData["Title"] = "Delete Workout";
+}
 
 <div class="d-flex align-items-center mb-4">
     <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-secondary me-3">← Back</a>
