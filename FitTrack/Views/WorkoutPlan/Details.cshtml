@@ -4,13 +4,6 @@
     ViewData["Title"] = Model.Title;
 }
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show">
-        @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
 
 <div class="d-flex align-items-center mb-4">
     <a asp-action="Index" class="btn btn-sm btn-outline-secondary me-3">← Back to Plans</a>

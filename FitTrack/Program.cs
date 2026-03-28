@@ -31,9 +31,12 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/errors/exception");
     app.UseHsts();
 }
+
+// Custom status-code pages (404, 403, etc.) in all environments
+app.UseStatusCodePagesWithReExecute("/errors/{0}");
 
 app.UseHttpsRedirection();
 app.UseRouting();

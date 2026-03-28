@@ -1,18 +1,6 @@
 @model FitTrack.ViewModels.Workout.WorkoutDetailsViewModel
 @{ ViewData["Title"] = $"Workout — {Model.Date:dd MMM yyyy}"; }
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show">
-        @TempData["Success"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show">
-        @TempData["Error"] <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
 
 <div class="d-flex align-items-center mb-4">
     <a asp-action="Index" class="btn btn-sm btn-outline-secondary me-3">← My Workouts</a>

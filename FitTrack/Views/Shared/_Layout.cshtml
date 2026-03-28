@@ -1,4 +1,14 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction     = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+    string NavClass(string controller, string action = "") =>
+        (currentController.Equals(controller, StringComparison.OrdinalIgnoreCase) &&
+         (action == "" || currentAction.Equals(action, StringComparison.OrdinalIgnoreCase)))
+            ? "nav-link text-dark active"
+            : "nav-link text-dark";
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
@@ -13,7 +23,9 @@
 <header>
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
         <div class="container-fluid">
-            <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">FitTrack</a>
+            <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">
+                <span class="text-primary">Fit</span>Track
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                     aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -21,21 +33,21 @@
             <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                 <ul class="navbar-nav flex-grow-1">
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        <a class="@NavClass("Home")" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Exercise" asp-action="Index">Exercises</a>
+                        <a class="@NavClass("Exercise")" asp-area="" asp-controller="Exercise" asp-action="Index">Exercises</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="WorkoutPlan" asp-action="Index">Plans</a>
+                        <a class="@NavClass("WorkoutPlan")" asp-area="" asp-controller="WorkoutPlan" asp-action="Index">Plans</a>
                     </li>
                     @if (User.Identity!.IsAuthenticated)
                     {
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Workout" asp-action="Index">My Workouts</a>
+                            <a class="@NavClass("Workout")" asp-area="" asp-controller="Workout" asp-action="Index">My Workouts</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Stats" asp-action="Index">Stats</a>
+                            <a class="@NavClass("Stats")" asp-area="" asp-controller="Stats" asp-action="Index">Stats</a>
                         </li>
                     }
                     @if (User.IsInRole("Admin"))
@@ -52,6 +64,7 @@
 </header>
 <div class="container">
     <main role="main" class="pb-3">
+        <partial name="_Alert"/>
         @RenderBody()
     </main>
 </div>

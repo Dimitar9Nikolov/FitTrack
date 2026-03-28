@@ -1,0 +1,19 @@
+@{
+    ViewData["Title"] = "Access Denied";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="text-center py-5">
+    <div class="display-1 fw-bold text-warning mb-3">403</div>
+    <h2 class="fw-bold mb-2">Access Denied</h2>
+    <p class="text-muted lead mb-4">
+        You don't have permission to view this page.
+    </p>
+    <div class="d-flex justify-content-center gap-3">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-primary btn-lg">Go Home</a>
+        @if (!User.Identity!.IsAuthenticated)
+        {
+            <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-outline-primary btn-lg">Log In</a>
+        }
+    </div>
+</div>

@@ -1,0 +1,41 @@
+@{
+    ViewData["Title"] = "Page Not Found";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="text-center py-5">
+    <div class="display-1 fw-bold text-primary mb-3">404</div>
+    <h2 class="fw-bold mb-2">Page Not Found</h2>
+    <p class="text-muted lead mb-4">
+        We couldn't find what you were looking for. The page may have been moved or deleted.
+    </p>
+    <div class="d-flex justify-content-center gap-3">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-primary btn-lg">
+            Go Home
+        </a>
+        <a asp-controller="WorkoutPlan" asp-action="Index" class="btn btn-outline-secondary btn-lg">
+            Browse Plans
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mt-4 justify-content-center">
+    <div class="col-md-3 text-center">
+        <a asp-controller="Exercise" asp-action="Index" class="text-decoration-none text-muted">
+            <div class="fs-2 mb-1">🏋️</div>
+            <div class="small">Exercise Library</div>
+        </a>
+    </div>
+    <div class="col-md-3 text-center">
+        <a asp-controller="Workout" asp-action="Index" class="text-decoration-none text-muted">
+            <div class="fs-2 mb-1">📋</div>
+            <div class="small">My Workouts</div>
+        </a>
+    </div>
+    <div class="col-md-3 text-center">
+        <a asp-controller="Stats" asp-action="Index" class="text-decoration-none text-muted">
+            <div class="fs-2 mb-1">📊</div>
+            <div class="small">My Stats</div>
+        </a>
+    </div>
+</div>
